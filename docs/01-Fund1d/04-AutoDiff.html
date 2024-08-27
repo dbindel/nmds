@@ -1,0 +1,1779 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.5.56">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>11&nbsp; Automatic Differentiation – Numerical Methods for Data Science</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../01-Fund1d/05-NumDiff.html" rel="next">
+<link href="../01-Fund1d/03-Approximation.html" rel="prev">
+<script src="../site_libs/quarto-html/quarto.js"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN") {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="nav-sidebar floating">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../01-Fund1d/00-Intro.html">Fundamentals in 1D</a></li><li class="breadcrumb-item"><a href="../01-Fund1d/04-AutoDiff.html"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Automatic Differentiation</span></a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="../">Numerical Methods for Data Science</a> 
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Search"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Preface</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../intro.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">Introduction</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a href="../00-Background/00-Intro.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Background Plus a Bit</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../00-Background/01-Julia.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Julia programming</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../00-Background/02-Performance.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Performance Basics</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../00-Background/03-LA.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Linear Algebra</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../00-Background/04-Calculus.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Calculus and analysis</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../00-Background/05-Optimization.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Optimization theory</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../00-Background/06-Probability.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Probability</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a href="../01-Fund1d/00-Intro.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Fundamentals in 1D</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../01-Fund1d/01-Error.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Notions of Error</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../01-Fund1d/02-Arithmetic.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Floating Point</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../01-Fund1d/03-Approximation.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Approximation</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../01-Fund1d/04-AutoDiff.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Automatic Differentiation</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../01-Fund1d/05-NumDiff.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Numerical Differentiation</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../01-Fund1d/06-Quadrature.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">Quadrature</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../01-Fund1d/07-Roots-Opt.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">14</span>&nbsp; <span class="chapter-title">Root Finding and Optimization</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../01-Fund1d/08-Random.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">15</span>&nbsp; <span class="chapter-title">Computing with Randomness</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a href="../02-NLA/00-Intro.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Numerical Linear Algebra</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../02-NLA/01-Systems.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">16</span>&nbsp; <span class="chapter-title">Linear Systems</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../02-NLA/02-Least-Squares.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">17</span>&nbsp; <span class="chapter-title">Least Squares</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../02-NLA/03-Eigenvalues.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">18</span>&nbsp; <span class="chapter-title">Eigenvalue Problems and the SVD</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../02-NLA/04-Signals.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">19</span>&nbsp; <span class="chapter-title">Signals and Transforms</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../02-NLA/05-Stationary.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">20</span>&nbsp; <span class="chapter-title">Stationary Iterations</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../02-NLA/06-Krylov.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">21</span>&nbsp; <span class="chapter-title">Krylov Subspaces</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a href="../03-Nonlinear/00-Intro.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Nonlinear Equations and Optimization</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-4" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../03-Nonlinear/01-Calculus.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">22</span>&nbsp; <span class="chapter-title">Calculus Revisited</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../03-Nonlinear/02-Nonlinear.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">23</span>&nbsp; <span class="chapter-title">Nonlinear Equations and Unconstrained Optimization</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../03-Nonlinear/03-Continuation.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">24</span>&nbsp; <span class="chapter-title">Continuation and Bifurcation</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../03-Nonlinear/04-Constrained.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">25</span>&nbsp; <span class="chapter-title">Constrained Optimization</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../03-Nonlinear/05-Least-Squares.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">26</span>&nbsp; <span class="chapter-title">Nonlinear Least Squares</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a href="../04-Random/00-Intro.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Computing with Randomness</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-5" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../04-Random/01-Sampling.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">27</span>&nbsp; <span class="chapter-title">Sampling</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../04-Random/02-Monte-Carlo.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">28</span>&nbsp; <span class="chapter-title">Quadrature and Monte Carlo</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../04-Random/03-Solvers.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">29</span>&nbsp; <span class="chapter-title">Solvers from Monte Carlo to Las Vegas</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../04-Random/04-UQ.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">30</span>&nbsp; <span class="chapter-title">Uncertainty Quantification</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a href="../05-Reduction/00-Intro.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Dimension Reduction and Latent Factor Models</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-6" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-6" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../05-Reduction/01-Matrix.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">31</span>&nbsp; <span class="chapter-title">Latent Factors and Matrix Factorization</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../05-Reduction/02-Tensor.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">32</span>&nbsp; <span class="chapter-title">From Matrices to Tensors</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../05-Reduction/03-Nonlinear.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">33</span>&nbsp; <span class="chapter-title">Nonlinear Dimensionality Reduction</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a href="../06-Approximation/00-Intro.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Function Approximation</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-7" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-7" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../06-Approximation/01-Concepts.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">34</span>&nbsp; <span class="chapter-title">Fundamental Concepts</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../06-Approximation/02-Low-Dimension.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">35</span>&nbsp; <span class="chapter-title">Low-Dimensional Structure</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../06-Approximation/03-Kernels.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">36</span>&nbsp; <span class="chapter-title">Kernels and RBFs</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../06-Approximation/04-NN.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">37</span>&nbsp; <span class="chapter-title">Neural Networks</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a href="../07-Networks/00-Intro.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Network Analysis</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-8" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-8" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../07-Networks/01-Matrices.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">38</span>&nbsp; <span class="chapter-title">Graphs and Matrices</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../07-Networks/02-Functions.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">39</span>&nbsp; <span class="chapter-title">Functions on Graphs</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../07-Networks/03-Cluster.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">40</span>&nbsp; <span class="chapter-title">Clustering and Partitioning</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../07-Networks/04-Centrality.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">41</span>&nbsp; <span class="chapter-title">Centrality Measures</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a href="../08-Dynamics/00-Intro.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Learning Dynamics</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-9" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-9" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../08-Dynamics/01-Fundamentals.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">42</span>&nbsp; <span class="chapter-title">Fundamentals</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../08-Dynamics/02-Model-Reduction.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">43</span>&nbsp; <span class="chapter-title">Model Reduction</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../08-Dynamics/03-Linear.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">44</span>&nbsp; <span class="chapter-title">Learning Linear Dynamics</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../08-Dynamics/04-Extrapolation.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">45</span>&nbsp; <span class="chapter-title">Extrapolation and Acceleration</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../08-Dynamics/05-Koopman.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">46</span>&nbsp; <span class="chapter-title">From Markov to Koopman</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../08-Dynamics/06-Nonlinear.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">47</span>&nbsp; <span class="chapter-title">Learning Nonlinear Dynamics</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../references.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">References</span></a>
+  </div>
+</li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#dual-numbers" id="toc-dual-numbers" class="nav-link active" data-scroll-target="#dual-numbers"><span class="header-section-number">11.1</span> Dual numbers</a>
+  <ul class="collapse">
+  <li><a href="#scalar-computations" id="toc-scalar-computations" class="nav-link" data-scroll-target="#scalar-computations"><span class="header-section-number">11.1.1</span> Scalar computations</a></li>
+  <li><a href="#matrix-computations" id="toc-matrix-computations" class="nav-link" data-scroll-target="#matrix-computations"><span class="header-section-number">11.1.2</span> Matrix computations</a></li>
+  <li><a href="#special-cases" id="toc-special-cases" class="nav-link" data-scroll-target="#special-cases"><span class="header-section-number">11.1.3</span> Special cases</a></li>
+  </ul></li>
+  <li><a href="#forward-and-backward" id="toc-forward-and-backward" class="nav-link" data-scroll-target="#forward-and-backward"><span class="header-section-number">11.2</span> Forward and backward</a>
+  <ul class="collapse">
+  <li><a href="#an-example" id="toc-an-example" class="nav-link" data-scroll-target="#an-example"><span class="header-section-number">11.2.1</span> An example</a></li>
+  </ul></li>
+  <li><a href="#a-derivative-example" id="toc-a-derivative-example" class="nav-link" data-scroll-target="#a-derivative-example"><span class="header-section-number">11.3</span> A derivative example</a>
+  <ul class="collapse">
+  <li><a href="#normalization" id="toc-normalization" class="nav-link" data-scroll-target="#normalization"><span class="header-section-number">11.3.1</span> Normalization</a></li>
+  <li><a href="#ssa" id="toc-ssa" class="nav-link" data-scroll-target="#ssa"><span class="header-section-number">11.3.2</span> SSA</a></li>
+  <li><a href="#derivative-function" id="toc-derivative-function" class="nav-link" data-scroll-target="#derivative-function"><span class="header-section-number">11.3.3</span> Derivative function</a></li>
+  <li><a href="#simplification" id="toc-simplification" class="nav-link" data-scroll-target="#simplification"><span class="header-section-number">11.3.4</span> Simplification</a></li>
+  <li><a href="#the-macro" id="toc-the-macro" class="nav-link" data-scroll-target="#the-macro"><span class="header-section-number">11.3.5</span> The macro</a></li>
+  </ul></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../01-Fund1d/00-Intro.html">Fundamentals in 1D</a></li><li class="breadcrumb-item"><a href="../01-Fund1d/04-AutoDiff.html"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Automatic Differentiation</span></a></li></ol></nav>
+<div class="quarto-title">
+<h1 class="title"><span id="sec-autodiff-ch" class="quarto-section-identifier"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Automatic Differentiation</span></span></h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<ul>
+<li>Automatic differentiation: forward, backward, adjoint</li>
+</ul>
+<section id="dual-numbers" class="level2" data-number="11.1">
+<h2 data-number="11.1" class="anchored" data-anchor-id="dual-numbers"><span class="header-section-number">11.1</span> Dual numbers</h2>
+<p>Computing with variations is not only useful for pen-and-paper computations; it is also the basis for automatic differentiation with so-called <em>dual numbers</em>. We describe some of the fundamentals of working with dual numbers below. A more full-featured implementation of the dual numbers is given in the <a href="https://github.com/JuliaDiff/ForwardDiff.jl"><code>ForwardDiff.jl</code></a> package.</p>
+<section id="scalar-computations" class="level3" data-number="11.1.1">
+<h3 data-number="11.1.1" class="anchored" data-anchor-id="scalar-computations"><span class="header-section-number">11.1.1</span> Scalar computations</h3>
+<p>A <em>dual number</em> is a pair <span class="math inline">\((x, \delta x)\)</span> consisting of a value <span class="math inline">\(x\)</span> and a variation <span class="math inline">\(\delta x\)</span>. As above, above, we can think of this as a function <span class="math inline">\(\tilde{x}(\epsilon) = x + \epsilon \, \delta x + o(\epsilon)\)</span>. For ordinary scalar numbers, we represent this with a Julia structure.</p>
+<div id="57d2ce91" class="cell" data-execution_count="2">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> Dual{T<span class="op">&lt;:</span><span class="dt">Number</span>} <span class="op">&lt;:</span><span class="dt"> Number</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    val <span class="op">::</span><span class="dt"> T  </span><span class="co"># Value</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    δ <span class="op">::</span><span class="dt"> T    </span><span class="co"># Variation</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="fu">value</span>(x <span class="op">::</span><span class="dt"> Dual</span>) <span class="op">=</span> x.val</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="fu">variation</span>(x <span class="op">::</span><span class="dt"> Dual</span>) <span class="op">=</span> x.δ</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>We want to allow constants, which are dual numbers with a zero variation. We can construct these directly or convert them from other numbers.</p>
+<div id="48e30279" class="cell" data-execution_count="3">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Dual</span><span class="dt">{T}</span>(x <span class="op">::</span><span class="dt"> T</span>) <span class="kw">where</span> {T} <span class="op">=</span> <span class="fu">Dual</span><span class="dt">{T}</span>(x, <span class="fu">zero</span>(T))</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="bu">Base</span>.<span class="fu">convert</span>(<span class="op">::</span><span class="dt">Type{Dual{T}}</span>, x <span class="op">::</span><span class="dt"> S</span>) <span class="kw">where</span> {T,S<span class="op">&lt;:</span><span class="dt">Number</span>} <span class="op">=</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">Dual</span><span class="dt">{T}</span>(x, <span class="fu">zero</span>(T))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>We also want to be able to convert between types of Julia dual numbers, and we want promotion rules for doing arithmetic that involves dual numbers together with other types of numbers.</p>
+<div id="fe0efc76" class="cell" data-execution_count="4">
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="bu">Base</span>.<span class="fu">convert</span>(<span class="op">::</span><span class="dt">Type{Dual{T}}</span>, x <span class="op">::</span><span class="dt"> Dual{S}</span>) <span class="kw">where</span> {T,S} <span class="op">=</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">Dual</span><span class="dt">{T}</span>(x.val, x.δ)</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="bu">Base</span>.<span class="fu">promote_rule</span>(<span class="op">::</span><span class="dt">Type{Dual{T}}</span>, <span class="op">::</span><span class="dt">Type{Dual{S}}</span>) <span class="kw">where</span> {T,S} <span class="op">=</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    Dual{<span class="fu">promote_type</span>(T,S)}</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="bu">Base</span>.<span class="fu">promote_rule</span>(<span class="op">::</span><span class="dt">Type{Dual{T}}</span>, <span class="op">::</span><span class="dt">Type{S}</span>) <span class="kw">where</span> {T,S<span class="op">&lt;:</span><span class="dt">Number</span>} <span class="op">=</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    Dual{<span class="fu">promote_type</span>(T,S)}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>We would like to define a variety of standard operations (unary and binary) for dual numbers. Rather than writing the same boilerplate code for every function, we write macros <code>@dual_unary</code> and <code>@dual_binary</code> that take the name of an operation and the formula for the derivative in terms of <span class="math inline">\(x, \delta x, y, \delta y\)</span>, where <span class="math inline">\(x\)</span> and <span class="math inline">\(y\)</span> are the first and second arguments, respectively.</p>
+<div id="ea2e7b22" class="cell" data-execution_count="5">
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">macro</span> <span class="fu">dual_unary</span>(op, formula)</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    <span class="op">:</span>(<span class="kw">function</span> <span class="op">$</span><span class="fu">op</span>(x <span class="op">::</span><span class="dt"> Dual</span>)</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>          x, δx <span class="op">=</span> <span class="fu">value</span>(x), <span class="fu">variation</span>(x)</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>          <span class="fu">Dual</span>(<span class="op">$</span><span class="fu">op</span>(x), <span class="op">$</span>formula)</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>      <span class="kw">end</span>)</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="kw">macro</span> <span class="fu">dual_binary</span>(op, formula)</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>    <span class="op">:</span>(<span class="kw">function</span> <span class="op">$</span><span class="fu">op</span>(x <span class="op">::</span><span class="dt"> Dual</span>, y <span class="op">::</span><span class="dt"> Dual</span>)</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>          x, δx <span class="op">=</span> <span class="fu">value</span>(x), <span class="fu">variation</span>(x)</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>          y, δy <span class="op">=</span> <span class="fu">value</span>(y), <span class="fu">variation</span>(y)</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>          <span class="fu">Dual</span>(<span class="op">$</span><span class="fu">op</span>(x, y), <span class="op">$</span>formula)</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>      <span class="kw">end</span>)</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>We overload the <code>+</code>, <code>-</code>, and <code>*</code> operators to work with dual numbers, using the usual rules of differentiation. We also overload both the left and right division operations and the exponentiation operation.</p>
+<div id="b5de2f83" class="cell" data-execution_count="6">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="pp">@dual_binary</span>(<span class="bu">Base</span>.<span class="op">:+</span>, δx <span class="op">+</span> δy)</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="pp">@dual_binary</span>(<span class="bu">Base</span>.<span class="op">:-</span>, δx <span class="op">-</span> δy)</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="pp">@dual_unary</span>(<span class="bu">Base</span>.<span class="op">:-</span>, <span class="op">-</span>δx)</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="pp">@dual_binary</span>(<span class="bu">Base</span>.<span class="op">:*</span>, δx<span class="op">*</span>y <span class="op">+</span> x<span class="op">*</span>δy)</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="pp">@dual_binary</span>(<span class="bu">Base</span>.<span class="op">:/</span>, (δx<span class="op">*</span>y <span class="op">-</span> x<span class="op">*</span>δy)<span class="op">/</span>y<span class="op">^</span><span class="fl">2</span>)</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="pp">@dual_binary</span>(<span class="bu">Base</span>.<span class="op">:\</span>, (δy<span class="op">*</span>x <span class="op">-</span> y<span class="op">*</span>δx)<span class="op">/</span>x<span class="op">^</span><span class="fl">2</span>)</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="pp">@dual_binary</span>(<span class="bu">Base</span>.<span class="op">:^</span>, x<span class="op">^</span><span class="fu">y*</span>(y<span class="op">*</span>δx<span class="op">/</span>x <span class="op">+</span> <span class="fu">log</span>(x)<span class="op">*</span>δy))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>We provide a second version of the power function for when the exponent is a constant integer (as is often the case); this allows us to deal with negative values of <span class="math inline">\(x\)</span> gracefully.</p>
+<div id="daf1677b" class="cell" data-execution_count="7">
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="bu">Base</span>.<span class="op">:^</span>(x <span class="op">::</span><span class="dt"> Dual</span>, n <span class="op">::</span><span class="dt"> Integer</span>) <span class="op">=</span> <span class="fu">Dual</span>(x.val<span class="op">^</span>n, n<span class="op">*</span>x.val<span class="op">^</span>(n<span class="op">-</span><span class="fl">1</span>)<span class="op">*</span>x.δ)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>For comparisons, we will only consider the value and ignore the variation.</p>
+<div id="3481ab14" class="cell" data-execution_count="8">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="bu">Base</span>.<span class="op">:</span>(<span class="op">==</span>)(x <span class="op">::</span><span class="dt"> Dual</span>, y <span class="op">::</span><span class="dt"> Dual</span>)  <span class="op">=</span> x.val <span class="op">==</span> y.val</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="bu">Base</span>.<span class="fu">isless</span>(x <span class="op">::</span><span class="dt"> Dual</span>, y <span class="op">::</span><span class="dt"> Dual</span>) <span class="op">=</span> x.val <span class="op">&lt;</span> y.val</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>For convenience, we also write a handful of the standard functions that one learns to differentiate in a first calculus course.</p>
+<div id="573a2792" class="cell" data-execution_count="9">
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="pp">@dual_unary</span>(<span class="bu">Base</span>.abs,  <span class="fu">δx*sign</span>(x))</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="pp">@dual_unary</span>(<span class="bu">Base</span>.sqrt, δx<span class="op">/</span><span class="fu">sqrt</span>(x)) </span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="pp">@dual_unary</span>(<span class="bu">Base</span>.exp,  <span class="fu">exp</span>(x)<span class="op">*</span>δx)</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="pp">@dual_unary</span>(<span class="bu">Base</span>.log,  δx<span class="op">/</span>x) </span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="pp">@dual_unary</span>(<span class="bu">Base</span>.sin,  <span class="fu">cos</span>(x)<span class="op">*</span>δx)</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a><span class="pp">@dual_unary</span>(<span class="bu">Base</span>.cos, <span class="fu">-sin</span>(x)<span class="op">*</span>δx) </span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a><span class="pp">@dual_unary</span>(<span class="bu">Base</span>.asin, δx<span class="op">/</span><span class="fu">sqrt</span>(<span class="fl">1</span><span class="op">-</span>x<span class="op">^</span><span class="fl">2</span>)) </span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a><span class="pp">@dual_unary</span>(<span class="bu">Base</span>.acos,<span class="op">-</span>δx<span class="op">/</span><span class="fu">sqrt</span>(<span class="fl">1</span><span class="op">-</span>x<span class="op">^</span><span class="fl">2</span>)) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>With these definitions in place, we can automatically differentiate through a variety of functions without writing any special code. For example, the following code differentiates the Haaland approximation to the Darcy-Weisbach friction factor in pipe flow and compares to a finite difference approximation:</p>
+<div id="075ab673" class="cell" data-execution_count="10">
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">fhaaland</span>(ϵ, D, Re) <span class="op">=</span> <span class="fl">1.0</span><span class="op">/</span>(<span class="op">-</span><span class="fl">1.8</span><span class="fu">*log</span>( (ϵ<span class="op">/</span>D<span class="op">/</span><span class="fl">3.7</span>)<span class="op">^</span><span class="fl">1.11</span> <span class="op">+</span> <span class="fl">6.9</span><span class="op">/</span>Re ))<span class="op">^</span><span class="fl">2</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    δy <span class="op">=</span> <span class="fu">fhaaland</span>(<span class="fl">0.01</span>, <span class="fl">1.0</span>, <span class="fu">Dual</span>(<span class="fl">3000</span>, <span class="fl">1</span>)).δ</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>    δy_fd <span class="op">=</span> <span class="fu">finite_diff</span>(<span class="fu">Re-&gt;fhaaland</span>(<span class="fl">0.01</span>, <span class="fl">1.0</span>, Re), <span class="fl">3000</span>, h<span class="op">=</span><span class="fl">1e-3</span>)</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">isapprox</span>(δy, δy_fd, rtol<span class="op">=</span><span class="fl">1e-6</span>)</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a> <span class="kw">end</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="11">
+<pre><code>true</code></pre>
+</div>
+</div>
+</section>
+<section id="matrix-computations" class="level3" data-number="11.1.2">
+<h3 data-number="11.1.2" class="anchored" data-anchor-id="matrix-computations"><span class="header-section-number">11.1.2</span> Matrix computations</h3>
+<p>We can also use dual numbers inside of some of the linear algebra routines provided by Julia. For example, consider <span class="math inline">\(x = A^{-1} b\)</span> where <span class="math inline">\(b\)</span> is treated as constant; the following code automatically computes both <span class="math inline">\(A^{-1} b\)</span> and <span class="math inline">\(-A^{-1} (\delta A) A^{-1} b\)</span>.</p>
+<div id="29d760a0" class="cell" data-execution_count="11">
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">test_dual_solve</span>()</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>    Aval <span class="op">=</span> [<span class="fl">1.0</span> <span class="fl">2.0</span>; <span class="fl">3.0</span> <span class="fl">4.0</span>]</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>    δA   <span class="op">=</span> [<span class="fl">1.0</span> <span class="fl">0.0</span>; <span class="fl">0.0</span> <span class="fl">0.0</span>]</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>    b <span class="op">=</span> [<span class="fl">3.0</span>; <span class="fl">4.0</span>]</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>    A <span class="op">=</span> <span class="fu">Dual</span>.(Aval, δA)</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>    x <span class="op">=</span> A<span class="op">\</span>b</span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Compare ordinary and variational parts to formulas</span></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>    <span class="fu">value</span>.(x) <span class="op">≈</span> Aval<span class="op">\</span>b <span class="op">&amp;&amp;</span></span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>    <span class="fu">variation</span>.(x) <span class="op">≈</span> <span class="fu">-Aval\</span>(<span class="fu">δA*</span>(Aval<span class="op">\</span>b))</span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a><span class="fu">test_dual_solve</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="12">
+<pre><code>true</code></pre>
+</div>
+</div>
+<p>While this type of automatic differentiation through a matrix operation works, it is relatively inefficient. We can also define operations that act at a matrix level for relatively expensive operations like matrix multiplication and linear solves. We give as an example code in Julia for more efficient linear solves with matrices of dual numbers, using LU factorization (<a href="../02-NLA/01-Systems.html" class="quarto-xref"><span>Chapter 16</span></a>) as the basis for applying <span class="math inline">\(A^{-1}\)</span> to a matrix or vector:</p>
+<div id="d3fc6ecc" class="cell" data-execution_count="12">
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="bu">Base</span>.<span class="op">:</span><span class="fu">\</span>(AA <span class="op">::</span><span class="dt"> AbstractMatrix{Dual{T}}</span>,</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>                 BB <span class="op">::</span><span class="dt"> AbstractVecOrMat{Dual{S}}</span>) <span class="kw">where</span> {T,S}</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>    A, δA <span class="op">=</span> <span class="fu">value</span>.(AA), <span class="fu">variation</span>.(AA)</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>    B, δB <span class="op">=</span> <span class="fu">value</span>.(BB), <span class="fu">variation</span>.(BB)</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>    F <span class="op">=</span> <span class="fu">lu</span>(A)</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>    X <span class="op">=</span> F<span class="op">\</span>B</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">Dual</span>.(X, <span class="fu">F\</span>(δB<span class="op">-</span>δA<span class="op">*</span>X))</span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="bu">Base</span>.<span class="op">:</span><span class="fu">\</span>(AA <span class="op">::</span><span class="dt"> AbstractMatrix{Dual{T}}</span>,</span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>                 B <span class="op">::</span><span class="dt"> AbstractVecOrMat{S}</span>) <span class="kw">where</span> {T,S}</span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>    A, δA <span class="op">=</span> <span class="fu">value</span>.(AA), <span class="fu">variation</span>.(AA)</span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>    F <span class="op">=</span> <span class="fu">lu</span>(A)</span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>    X <span class="op">=</span> F<span class="op">\</span>B</span>
+<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a>    <span class="fu">Dual</span>.(X, <span class="fu">F\</span>(<span class="op">-</span>δA<span class="op">*</span>X))</span>
+<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
+<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="bu">Base</span>.<span class="op">:</span><span class="fu">\</span>(A <span class="op">::</span><span class="dt"> AbstractMatrix{T}</span>,</span>
+<span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a>                 BB <span class="op">::</span><span class="dt"> AbstractVecOrMat{Dual{S}}</span>) <span class="kw">where</span> {T,S}</span>
+<span id="cb13-20"><a href="#cb13-20" aria-hidden="true" tabindex="-1"></a>    B, δB <span class="op">=</span> <span class="fu">value</span>.(BB), <span class="fu">variation</span>.(BB)</span>
+<span id="cb13-21"><a href="#cb13-21" aria-hidden="true" tabindex="-1"></a>    F <span class="op">=</span> <span class="fu">lu</span>(A)</span>
+<span id="cb13-22"><a href="#cb13-22" aria-hidden="true" tabindex="-1"></a>    <span class="fu">Dual</span>.(F<span class="op">\</span>B, F<span class="op">\</span>δB)</span>
+<span id="cb13-23"><a href="#cb13-23" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
+<span id="cb13-24"><a href="#cb13-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-25"><a href="#cb13-25" aria-hidden="true" tabindex="-1"></a><span class="fu">test_dual_solve</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="13">
+<pre><code>true</code></pre>
+</div>
+</div>
+</section>
+<section id="special-cases" class="level3" data-number="11.1.3">
+<h3 data-number="11.1.3" class="anchored" data-anchor-id="special-cases"><span class="header-section-number">11.1.3</span> Special cases</h3>
+<p>There are other cases as well where automatic differentiation using dual numbers needs a little help. For example, consider the thin-plate spline function, which has a removable singularity at zero:</p>
+<div id="5a3fbf0c" class="cell" data-execution_count="13">
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ϕtps</span>(r) <span class="op">=</span> r <span class="op">==</span> <span class="fl">0.0</span> ? <span class="fl">0.0</span> <span class="op">:</span> r<span class="op">^</span><span class="fl">2</span><span class="fu">*log</span>(<span class="fu">abs</span>(r))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>If we treat <span class="math inline">\(r\)</span> as a dual number, the output for <span class="math inline">\(r = 0\)</span> will be an ordinary floating point number, while the output for every other value of <span class="math inline">\(r\)</span> will be a dual number. However, we can deal with this by writing a specialized version of the function for dual numbers.</p>
+<div id="687fac4d" class="cell" data-execution_count="14">
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ϕtps</span>(r <span class="op">::</span><span class="dt"> Dual</span>) <span class="op">=</span> r <span class="op">==</span> <span class="fl">0.0</span> ? <span class="fu">Dual</span>(<span class="fl">0.0</span>, <span class="fl">0.0</span>) <span class="op">:</span> r<span class="op">^</span><span class="fl">2</span><span class="fu">*log</span>(r)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>With this version, the function works correctly at both zero and nonzero dual number arguments:</p>
+<div id="a145ca97" class="cell" data-execution_count="15">
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ϕtps</span>(<span class="fu">Dual</span>(<span class="fl">0.0</span>, <span class="fl">1.0</span>)), <span class="fu">ϕtps</span>(<span class="fu">Dual</span>(<span class="fl">1.0</span>, <span class="fl">1.0</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="16">
+<pre><code>(Dual{Float64}(0.0, 0.0), Dual{Float64}(0.0, 1.0))</code></pre>
+</div>
+</div>
+<p>In addition to difficulties with removable singularities, automatic differentiation systems may lose accuracy do to floating point effects even for functions that are well-behaved. We return to this in <a href="02-Arithmetic.html" class="quarto-xref"><span>Chapter 9</span></a>.</p>
+</section>
+</section>
+<section id="forward-and-backward" class="level2" data-number="11.2">
+<h2 data-number="11.2" class="anchored" data-anchor-id="forward-and-backward"><span class="header-section-number">11.2</span> Forward and backward</h2>
+<p>In the previous section, we described automatic differentiation by tracking variations (dual numbers) through a computation, often known as <em>forward mode</em> differentiation. An alternate approach known as <em>backward mode</em> (or <em>adjoint mode</em>) differentiation involves tracking a different set of variables (dual variables)</p>
+<section id="an-example" class="level3" data-number="11.2.1">
+<h3 data-number="11.2.1" class="anchored" data-anchor-id="an-example"><span class="header-section-number">11.2.1</span> An example</h3>
+<p>We consider again the sample function given in the previous section: <span class="math display">\[
+  f(x_1, x_2) =
+  \left( -1.8 \log (x_1/3.7)^{1.11} + 6.9/x_2 \right)^{-2}.
+\]</span> We would usually write this concisely as</p>
+<div id="b760b480" class="cell" data-execution_count="16">
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="fu">fhaaland0</span>(x1, x2) <span class="op">=</span> (<span class="op">-</span><span class="fl">1.8</span><span class="fu">*log</span>( (x1<span class="op">/</span><span class="fl">3.7</span>)<span class="op">^</span><span class="fl">1.11</span> <span class="op">+</span> <span class="fl">6.9</span><span class="op">/</span>x2 ))<span class="op">^-</span><span class="fl">2</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>When we compute or manipulate such somewhat messy expressions (e.g.&nbsp;for differentiation), it is useful to split them into simpler subexpressions (as in the single static assignment (SSA) style introduced in <a href="../00-Background/01-Julia.html" class="quarto-xref"><span>Chapter 2</span></a>). For example, we can rewrite <span class="math inline">\(f(x_1, y_1)\)</span> in terms of seven intermediate expressions, and compute variations of each intermediate to get a variation of the final result. In code, this is</p>
+<div id="bbf5ff86" class="cell" data-execution_count="17">
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">fhaaland1</span>(x1, x2)</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>    y1 <span class="op">=</span> x1<span class="op">/</span><span class="fl">3.7</span></span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>    y2 <span class="op">=</span> y1<span class="op">^</span><span class="fl">1.11</span></span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>    y3 <span class="op">=</span> <span class="fl">6.9</span><span class="op">/</span>x2</span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>    y4 <span class="op">=</span> y2<span class="op">+</span>y3</span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>    y5 <span class="op">=</span> <span class="fu">log</span>(y4)</span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>    y6 <span class="op">=</span> <span class="op">-</span><span class="fl">1.8</span><span class="op">*</span>y5</span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>    y7 <span class="op">=</span> y6<span class="op">^-</span><span class="fl">2</span></span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a>    <span class="kw">function</span> <span class="fu">Df</span>(δx1, δx2)</span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a>        δy1 <span class="op">=</span> δx1<span class="op">/</span><span class="fl">3.7</span></span>
+<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a>        δy2 <span class="op">=</span> <span class="fl">1.11</span><span class="op">*</span>y1<span class="op">^</span><span class="fl">0.11</span> <span class="op">*</span> δy1</span>
+<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a>        δy3 <span class="op">=</span> <span class="op">-</span><span class="fl">6.9</span><span class="op">/</span>x2<span class="op">^</span><span class="fl">2</span> <span class="op">*</span> δx2</span>
+<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a>        δy4 <span class="op">=</span> δy2<span class="op">+</span>δy3</span>
+<span id="cb20-14"><a href="#cb20-14" aria-hidden="true" tabindex="-1"></a>        δy5 <span class="op">=</span> δy4<span class="op">/</span>y4</span>
+<span id="cb20-15"><a href="#cb20-15" aria-hidden="true" tabindex="-1"></a>        δy6 <span class="op">=</span> <span class="op">-</span><span class="fl">1.8</span><span class="op">*</span>δy5</span>
+<span id="cb20-16"><a href="#cb20-16" aria-hidden="true" tabindex="-1"></a>        δy7 <span class="op">=</span> <span class="op">-</span><span class="fl">2</span><span class="op">*</span>y6<span class="op">^</span>(<span class="op">-</span><span class="fl">3</span>)<span class="op">*</span>δy6</span>
+<span id="cb20-17"><a href="#cb20-17" aria-hidden="true" tabindex="-1"></a>    <span class="kw">end</span></span>
+<span id="cb20-18"><a href="#cb20-18" aria-hidden="true" tabindex="-1"></a>    y7, Df</span>
+<span id="cb20-19"><a href="#cb20-19" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>The function <code>Df</code> inside <code>fhaaland1</code> computes derivatives similarly to using dual numbers as in the previous section.</p>
+<p>Another way to think of this computation is that we have solved for the intermediate <span class="math inline">\(y\)</span> variables as a function of <span class="math inline">\(x\)</span> from the relationship <span class="math display">\[
+  G(x, y) = h(x,y) - y = 0,
+\]</span> where the rows of <span class="math inline">\(h\)</span> are the seven equations above, e.g.&nbsp;<span class="math inline">\(h_1(x,y) = x_1/3.7\)</span>. Differentiating this relation gives us <span class="math display">\[
+  D_1 h(x,y) \, \delta x + \left( D_2 h(x,y) - I \right) \, \delta y = 0.
+\]</span> The formula for the variations in the <span class="math inline">\(y\)</span> variables can be thought of as coming from using forward substitution to solve the linear system <span class="math display">\[
+  (D_2 h(x,y) -I) \delta y = -D_1 h(x,y) \delta x.
+\]</span> That is, we compute the components of <span class="math inline">\(\delta y\)</span> in order by observing that <span class="math inline">\(h_i(x,y)\)</span> depends only on <span class="math inline">\(y_1, \ldots, y_{i-1}\)</span> and writing <span class="math display">\[
+  \delta y_i
+  = D_1 h_i(x,y) \, \delta x +
+    \sum_{j=1}^{i=1} \left( D_2 h_i(x,y) \right)_j \, \delta y_j.
+\]</span></p>
+<p>A key observation is that we do <em>not</em> then use all of <span class="math inline">\(\delta y\)</span>; we only care about <span class="math display">\[
+  f'(x) \delta x = w^* \delta y,
+\]</span> where <span class="math inline">\(w^*\)</span> is a functional that selects the desired output (here <span class="math inline">\(w^* = e_7^*\)</span>). Putting the steps of the previous computation together, we have <span class="math display">\[
+  f'(x) \, \delta x =
+  w^* \left[ \left( D_2 h(x,y) - I)^{-1} \left( -D_1 h(x_y) \, \delta x
+  \right) \right) \right].
+\]</span> But associativity, we could also write this as <span class="math display">\[
+  f'(x) \, \delta x =
+  \left[ \left( -w^* (D_2 h(x,y) - I)^{-1} \right) D_1 h(x,y) \right]
+  \, \delta x.
+\]</span> Giving names to the parenthesized pieces of this latter equation, we have <span class="math display">\[\begin{aligned}
+  \bar{y}^* &amp;= -w^* (D_2 h(x,y) - I)^{-1} \\
+  f'(x) &amp;= \bar{y}^* D_1 h(x,y).
+\end{aligned}\]</span> Where we solved the system for the variations <span class="math inline">\(\delta y\)</span> by <em>forward</em> substitution, we solve the system dual variables <span class="math inline">\(\bar{y}^*\)</span> by <em>backward substitution</em>, applying the formula <span class="math display">\[
+  \bar{y}_j^* = w_j^* + \sum_{i=j+1}^n \bar{y}_i^* (D_2 h_i(x,y))_j
+\]</span> for <span class="math inline">\(j = m, m-1, \ldots, 1\)</span>. Because this computation can be written in terms of a solve with the adjoint matrix <span class="math inline">\((D_2 h(x,y)-I)^*\)</span> using backward substitution, this method of computing derivatives is sometimes called <em>adjoint mode</em> or <em>backward mode</em> differentiation.</p>
+<p>Translating these ideas into code for our example function, we have</p>
+<div id="884ca8e6" class="cell" data-execution_count="19">
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">fhaaland2</span>(x1, x2)</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>    y1 <span class="op">=</span> x1<span class="op">/</span><span class="fl">3.7</span></span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>    y2 <span class="op">=</span> y1<span class="op">^</span><span class="fl">1.11</span></span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>    y3 <span class="op">=</span> <span class="fl">6.9</span><span class="op">/</span>x2</span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>    y4 <span class="op">=</span> y2<span class="op">+</span>y3</span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>    y5 <span class="op">=</span> <span class="fu">log</span>(y4)</span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a>    y6 <span class="op">=</span> <span class="op">-</span><span class="fl">1.8</span><span class="op">*</span>y5</span>
+<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a>    y7 <span class="op">=</span> y6<span class="op">^-</span><span class="fl">2</span></span>
+<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb21-10"><a href="#cb21-10" aria-hidden="true" tabindex="-1"></a>    ȳ<span class="fl">7</span> <span class="op">=</span> <span class="fl">1</span></span>
+<span id="cb21-11"><a href="#cb21-11" aria-hidden="true" tabindex="-1"></a>    ȳ<span class="fl">6</span> <span class="op">=</span> ȳ<span class="fl">7</span> <span class="op">*</span> (<span class="op">-</span><span class="fl">2</span><span class="op">*</span>y6<span class="op">^-</span><span class="fl">3</span>)</span>
+<span id="cb21-12"><a href="#cb21-12" aria-hidden="true" tabindex="-1"></a>    ȳ<span class="fl">5</span> <span class="op">=</span> ȳ<span class="fl">6</span> <span class="op">*</span> (<span class="op">-</span><span class="fl">1.8</span>)</span>
+<span id="cb21-13"><a href="#cb21-13" aria-hidden="true" tabindex="-1"></a>    ȳ<span class="fl">4</span> <span class="op">=</span> ȳ<span class="fl">5</span><span class="op">/</span>y4</span>
+<span id="cb21-14"><a href="#cb21-14" aria-hidden="true" tabindex="-1"></a>    ȳ<span class="fl">3</span> <span class="op">=</span> ȳ<span class="fl">4</span></span>
+<span id="cb21-15"><a href="#cb21-15" aria-hidden="true" tabindex="-1"></a>    ȳ<span class="fl">2</span> <span class="op">=</span> ȳ<span class="fl">4</span></span>
+<span id="cb21-16"><a href="#cb21-16" aria-hidden="true" tabindex="-1"></a>    ȳ<span class="fl">1</span> <span class="op">=</span> ȳ<span class="fl">2</span> <span class="op">*</span> (<span class="fl">1.11</span><span class="op">*</span>y1<span class="op">^</span><span class="fl">0.11</span>)</span>
+<span id="cb21-17"><a href="#cb21-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-18"><a href="#cb21-18" aria-hidden="true" tabindex="-1"></a>    Df <span class="op">=</span> [ȳ<span class="fl">1</span><span class="op">/</span><span class="fl">3.7</span>  <span class="fu">ȳ3*</span>(<span class="op">-</span><span class="fl">6.9</span><span class="op">/</span>x2<span class="op">^</span><span class="fl">2</span>)]</span>
+<span id="cb21-19"><a href="#cb21-19" aria-hidden="true" tabindex="-1"></a>    y7, Df</span>
+<span id="cb21-20"><a href="#cb21-20" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>We now have three different methods for computing the derivative of <span class="math inline">\(f\)</span>, which we illustrate below (as well as checking that our computations agree with each other).</p>
+<div id="7f18853b" class="cell" data-execution_count="20">
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Compute f and the derivative using dual numbers</span></span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>    f0a <span class="op">=</span> <span class="fu">fhaaland0</span>(<span class="fu">Dual</span>(<span class="fl">0.01</span>, <span class="fl">1.0</span>), <span class="fl">3000</span>)</span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>    f0b <span class="op">=</span> <span class="fu">fhaaland0</span>(<span class="fl">0.01</span>, <span class="fu">Dual</span>(<span class="fl">3000</span>, <span class="fl">1</span>))</span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a>    Df0 <span class="op">=</span> [<span class="fu">variation</span>(f0a) <span class="fu">variation</span>(f0b)]</span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Compute using the SSA-based forward mode code</span></span>
+<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a>    f1, Df1fun <span class="op">=</span> <span class="fu">fhaaland1</span>(<span class="fl">0.01</span>, <span class="fl">3000</span>)</span>
+<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a>    Df1 <span class="op">=</span> [<span class="fu">Df1fun</span>(<span class="fl">1</span>,<span class="fl">0</span>) <span class="fu">Df1fun</span>(<span class="fl">0</span>,<span class="fl">1</span>)]</span>
+<span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-11"><a href="#cb22-11" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Compute using the SSA-based backward mode code</span></span>
+<span id="cb22-12"><a href="#cb22-12" aria-hidden="true" tabindex="-1"></a>    f2, Df2 <span class="op">=</span> <span class="fu">fhaaland2</span>(<span class="fl">0.01</span>, <span class="fl">3000</span>)</span>
+<span id="cb22-13"><a href="#cb22-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-14"><a href="#cb22-14" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Compare to see that all give the same results</span></span>
+<span id="cb22-15"><a href="#cb22-15" aria-hidden="true" tabindex="-1"></a>    f1 <span class="op">==</span> f2 <span class="op">&amp;&amp;</span> f1 <span class="op">≈</span> <span class="fu">value</span>(f0a) <span class="op">&amp;&amp;</span> f1 <span class="op">≈</span> <span class="fu">value</span>(f0b) <span class="op">&amp;&amp;</span></span>
+<span id="cb22-16"><a href="#cb22-16" aria-hidden="true" tabindex="-1"></a>    Df1[<span class="fl">1</span>] <span class="op">≈</span> Df2[<span class="fl">1</span>] <span class="op">&amp;&amp;</span> Df0[<span class="fl">1</span>] <span class="op">≈</span> Df2[<span class="fl">1</span>] <span class="op">&amp;&amp;</span></span>
+<span id="cb22-17"><a href="#cb22-17" aria-hidden="true" tabindex="-1"></a>    Df1[<span class="fl">2</span>] <span class="op">≈</span> Df2[<span class="fl">2</span>] <span class="op">&amp;&amp;</span> Df0[<span class="fl">2</span>] <span class="op">≈</span> Df2[<span class="fl">2</span>]</span>
+<span id="cb22-18"><a href="#cb22-18" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="21">
+<pre><code>true</code></pre>
+</div>
+</div>
+<p>We note that we only need to compute the <span class="math inline">\(\bar{y}\)</span> variables <em>once</em> to get the derivative vector, where for forward mode we need to compute the <span class="math inline">\(\delta y\)</span> variables <em>twice</em>.</p>
+<p>The cost of computing the derivative in one direction <span class="math inline">\((\delta x_1, \delta y_2)\)</span> is only about as great as the cost of evaluating <span class="math inline">\(f\)</span>. But if we wanted the derivative with respect to both <span class="math inline">\(x_1\)</span> and <span class="math inline">\(x_2\)</span>, we would need to run at least the code in <code>Df</code> twice (and with the dual number implementation from the previous section, we would also run the evaluation of <span class="math inline">\(f\)</span> twice).</p>
+</section>
+</section>
+<section id="a-derivative-example" class="level2" data-number="11.3">
+<h2 data-number="11.3" class="anchored" data-anchor-id="a-derivative-example"><span class="header-section-number">11.3</span> A derivative example</h2>
+<p>Beyond writing language utilities, Julia macros are useful for writing embedded domain-specific languages (DSLs) for accomplishing particular tasks. In this setting, we are really writing a language interpreter embedded in Julia, using the Julia parse tree as an input and producing Julia code as output.</p>
+<p>One example has to do with <em>automatic differentiation</em> of simple code expressions, where we are giving another interpretation to simple Julia expressions. This is a more ambitious example, and can be safely skipped over. However, it is also a useful example of a variety of features in Julia. Some types of automatic differentiation can be done in arguably simpler and more powerful ways without writing macros, and we will return to this in later chapters.</p>
+<section id="normalization" class="level3" data-number="11.3.1">
+<h3 data-number="11.3.1" class="anchored" data-anchor-id="normalization"><span class="header-section-number">11.3.1</span> Normalization</h3>
+<p>We define a “simple” expression as one that only involves only:</p>
+<ul>
+<li>Literal nodes (including symbols),</li>
+<li><code>Expr</code> nodes of <code>call</code> type, including arithmetic and function calls,</li>
+<li>Assignment statements,</li>
+<li>Tuple constructors,</li>
+<li><code>begin</code>/<code>end</code> blocks.</li>
+</ul>
+<p>We can test for simple expressions by recursing through an expression tree</p>
+<div id="82f672a0" class="cell" data-execution_count="21">
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Simple expression nodes</span></span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a><span class="fu">is_simple</span>(<span class="cn">e</span> <span class="op">::</span><span class="dt"> Expr</span>) <span class="op">=</span></span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>    <span class="cn">e</span>.head <span class="kw">in</span> [<span class="op">:</span>call, <span class="op">:</span>(<span class="op">=</span>), <span class="op">:</span>tuple, <span class="op">:</span>block] <span class="op">&amp;&amp;</span></span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">all</span>(<span class="fu">is_simple</span>.(<span class="cn">e</span>.args))</span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Other nodes are literal, always simple</span></span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a><span class="fu">is_simple</span>(<span class="cn">e</span>) <span class="op">=</span> <span class="cn">true</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>In addition to insisting that expressions are simple, we also want to simplify some peculiarities in Julia’s parsing of addition and multiplication. In many languages, an expression like <code>1 + 2 + 3</code> is parsed as two operations: <code>(1 + 2) + 3</code>. In Julia, this results in a single node. It will simplify our life to convert these types of nodes to binary nodes, assuming left associativity of the addition operation. We do this by recursively rewriting the expression tree to replace a particular type of operation node (calling <code>op</code>) with a left-associated version of that same node:</p>
+<div id="49b680bf" class="cell" data-execution_count="22">
+<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="fu">leftassoc</span>(op <span class="op">::</span><span class="dt"> Symbol</span>, <span class="cn">e</span>) <span class="op">=</span> <span class="cn">e</span></span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">leftassoc</span>(op <span class="op">::</span><span class="dt"> Symbol</span>, <span class="cn">e</span> <span class="op">::</span><span class="dt"> Expr</span>)</span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>    args <span class="op">=</span> <span class="fu">leftassoc</span>.(op, <span class="cn">e</span>.args)</span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="cn">e</span>.head <span class="op">==</span> <span class="op">:</span>call <span class="op">&amp;&amp;</span> args[<span class="fl">1</span>] <span class="op">==</span> op</span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>        <span class="fu">foldl</span>((x,y) <span class="op">-&gt;</span> <span class="fu">Expr</span>(<span class="op">:</span>call, op, x, y), args[<span class="fl">2</span><span class="op">:</span><span class="kw">end</span>])</span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span></span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>        <span class="fu">Expr</span>(<span class="cn">e</span>.head, args<span class="op">...</span>)</span>
+<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
+<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>We are particularly interested in left associativity of addition and multiplication, so we write a single function for those operations</p>
+<div id="c994ed73" class="cell" data-execution_count="23">
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="fu">leftassoc</span>(<span class="cn">e</span>) <span class="op">=</span> <span class="fu">leftassoc</span>(<span class="op">:+</span>, <span class="fu">leftassoc</span>(<span class="op">:*</span>, <span class="cn">e</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>We can see the effect by printing the parse of a particular example:</p>
+<div id="c07be5cb" class="cell" data-execution_count="24">
+<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span></span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>    <span class="cn">e</span> <span class="op">=</span> <span class="op">:</span>(a<span class="op">*</span>b<span class="op">*</span>c <span class="op">+</span> <span class="fl">2</span> <span class="op">+</span> <span class="fl">3</span>)</span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">println</span>(<span class="st">"Before: </span><span class="sc">$</span>e<span class="st">"</span>)</span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">println</span>(<span class="st">"After:  </span><span class="sc">$</span>(<span class="fu">leftassoc</span>(<span class="cn">e</span>))<span class="st">"</span>)</span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Before: a * b * c + 2 + 3
+After:  ((a * b) * c + 2) + 3</code></pre>
+</div>
+</div>
+<p>Finally, the Julia parser adds <code>LineNumberNodes</code> to blocks in order to aid with debugging. We will dispose of those here so that we can focus solely on processing expressions.</p>
+<div id="80293838" class="cell" data-execution_count="25">
+<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="fu">filter_line</span>(<span class="cn">e</span>) <span class="op">=</span> <span class="cn">e</span></span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a><span class="fu">filter_line</span>(<span class="cn">e</span> <span class="op">::</span><span class="dt"> Expr</span>) <span class="op">=</span></span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">Expr</span>(<span class="cn">e</span>.head,</span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>         <span class="fu">filter</span>(<span class="fu">x-&gt;!</span>(x isa LineNumberNode),</span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a>                <span class="fu">filter_line</span>.(<span class="cn">e</span>.args))<span class="op">...</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Putting everything together, we will normalize simple expressions by eliminating line numbers and re-associating addition and multiplication.</p>
+<div id="47605bd0" class="cell" data-execution_count="26">
+<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="fu">normalize_expr</span>(<span class="cn">e</span>) <span class="op">=</span> <span class="cn">e</span></span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">normalize_expr</span>(<span class="cn">e</span> <span class="op">::</span><span class="dt"> Expr</span>)</span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>    <span class="pp">@assert</span> <span class="fu">is_simple</span>(<span class="cn">e</span>) <span class="st">"Expression must be simple"</span></span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">leftassoc</span>(<span class="fu">filter_line</span>(<span class="cn">e</span>))</span>
+<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="ssa" class="level3" data-number="11.3.2">
+<h3 data-number="11.3.2" class="anchored" data-anchor-id="ssa"><span class="header-section-number">11.3.2</span> SSA</h3>
+<p>Simple expressions of the type that we have described can be converted to <em>static single assignment</em> (SSA) form, where each intermediate subexpression is assigned a unique local name (which we produce with a call to <code>gensym</code>). We represent a program in SSA form as a vector of <code>(symbol, expression)</code> pairs to be interpreted as “evaluate the expression and assign it to the symbol.” We <em>emit</em> SSA terms by appending them to the end of a list.</p>
+<div id="366c5eb5" class="cell" data-execution_count="27">
+<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">ssa_generator</span>()</span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>    result <span class="op">=</span> []</span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Add a single term to the SSA result</span></span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">function</span> <span class="fu">emit!</span>(s, <span class="cn">e</span>)</span>
+<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a>        <span class="fu">push!</span>(result, (s,<span class="cn">e</span>))</span>
+<span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a>        s</span>
+<span id="cb31-8"><a href="#cb31-8" aria-hidden="true" tabindex="-1"></a>    <span class="kw">end</span></span>
+<span id="cb31-9"><a href="#cb31-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-10"><a href="#cb31-10" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Add several terms to the SSA result;</span></span>
+<span id="cb31-11"><a href="#cb31-11" aria-hidden="true" tabindex="-1"></a>    <span class="co">#  s is the designated "final result"</span></span>
+<span id="cb31-12"><a href="#cb31-12" aria-hidden="true" tabindex="-1"></a>    <span class="kw">function</span> <span class="fu">emit!</span>(s, l <span class="op">::</span><span class="dt"> Vector</span>)</span>
+<span id="cb31-13"><a href="#cb31-13" aria-hidden="true" tabindex="-1"></a>        <span class="fu">append!</span>(result, l)</span>
+<span id="cb31-14"><a href="#cb31-14" aria-hidden="true" tabindex="-1"></a>        s</span>
+<span id="cb31-15"><a href="#cb31-15" aria-hidden="true" tabindex="-1"></a>    <span class="kw">end</span></span>
+<span id="cb31-16"><a href="#cb31-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-17"><a href="#cb31-17" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Emit a term with a new local name</span></span>
+<span id="cb31-18"><a href="#cb31-18" aria-hidden="true" tabindex="-1"></a>    <span class="fu">emit!</span>(<span class="cn">e</span>) <span class="op">=</span> <span class="fu">emit!</span>(<span class="fu">gensym</span>(), <span class="cn">e</span>)</span>
+<span id="cb31-19"><a href="#cb31-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-20"><a href="#cb31-20" aria-hidden="true" tabindex="-1"></a>    result, emit!</span>
+<span id="cb31-21"><a href="#cb31-21" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>The <code>to_ssa</code> function returns a final result in SSA form Each symbol is only assigned once. Each arithmetic, function call, and tuple constructor results in a new symbol. For assignments, we record a binding of the left hand side symbol to the result computed for the right hand side.</p>
+<div id="8f96bcf3" class="cell" data-execution_count="28">
+<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">to_ssa</span>(<span class="cn">e</span> <span class="op">::</span><span class="dt"> Expr</span>)</span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Check and normalize the expression</span></span>
+<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>    <span class="cn">e</span> <span class="op">=</span> <span class="fu">normalize_expr</span>(<span class="cn">e</span>)</span>
+<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Set up results list and symbol table</span></span>
+<span id="cb32-7"><a href="#cb32-7" aria-hidden="true" tabindex="-1"></a>    elist, emit! <span class="op">=</span> <span class="fu">ssa_generator</span>()</span>
+<span id="cb32-8"><a href="#cb32-8" aria-hidden="true" tabindex="-1"></a>    symbol_table <span class="op">=</span> <span class="fu">Dict</span><span class="dt">{Symbol,Any}</span>()</span>
+<span id="cb32-9"><a href="#cb32-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-10"><a href="#cb32-10" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Functions for recursive processing</span></span>
+<span id="cb32-11"><a href="#cb32-11" aria-hidden="true" tabindex="-1"></a>    <span class="fu">process</span>(<span class="cn">e</span>) <span class="op">=</span> <span class="cn">e</span></span>
+<span id="cb32-12"><a href="#cb32-12" aria-hidden="true" tabindex="-1"></a>    <span class="fu">process</span>(<span class="cn">e</span> <span class="op">::</span><span class="dt"> Symbol</span>) <span class="op">=</span> <span class="fu">get</span>(symbol_table, <span class="cn">e</span>, <span class="cn">e</span>)</span>
+<span id="cb32-13"><a href="#cb32-13" aria-hidden="true" tabindex="-1"></a>    <span class="kw">function</span> <span class="fu">process</span>(<span class="cn">e</span> <span class="op">::</span><span class="dt"> Expr</span>)</span>
+<span id="cb32-14"><a href="#cb32-14" aria-hidden="true" tabindex="-1"></a>        args <span class="op">=</span> <span class="fu">process</span>.(<span class="cn">e</span>.args)</span>
+<span id="cb32-15"><a href="#cb32-15" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="cn">e</span>.head <span class="op">==</span> <span class="op">:</span>block</span>
+<span id="cb32-16"><a href="#cb32-16" aria-hidden="true" tabindex="-1"></a>            args[<span class="kw">end</span>]</span>
+<span id="cb32-17"><a href="#cb32-17" aria-hidden="true" tabindex="-1"></a>        <span class="cf">elseif</span> <span class="cn">e</span>.head <span class="op">==</span> <span class="op">:</span>(<span class="op">=</span>)</span>
+<span id="cb32-18"><a href="#cb32-18" aria-hidden="true" tabindex="-1"></a>            symbol_table[<span class="cn">e</span>.args[<span class="fl">1</span>]] <span class="op">=</span> args[<span class="fl">2</span>]</span>
+<span id="cb32-19"><a href="#cb32-19" aria-hidden="true" tabindex="-1"></a>            args[<span class="fl">2</span>]</span>
+<span id="cb32-20"><a href="#cb32-20" aria-hidden="true" tabindex="-1"></a>        <span class="cf">else</span></span>
+<span id="cb32-21"><a href="#cb32-21" aria-hidden="true" tabindex="-1"></a>            <span class="fu">emit!</span>(<span class="fu">Expr</span>(<span class="cn">e</span>.head, args<span class="op">...</span>))</span>
+<span id="cb32-22"><a href="#cb32-22" aria-hidden="true" tabindex="-1"></a>        <span class="cf">end</span></span>
+<span id="cb32-23"><a href="#cb32-23" aria-hidden="true" tabindex="-1"></a>    <span class="kw">end</span></span>
+<span id="cb32-24"><a href="#cb32-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-25"><a href="#cb32-25" aria-hidden="true" tabindex="-1"></a>    <span class="fu">process</span>(<span class="cn">e</span>), elist</span>
+<span id="cb32-26"><a href="#cb32-26" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>In case we want to convert a single leaf to SSA form, we define a second method:</p>
+<div id="c551b551" class="cell" data-execution_count="29">
+<div class="sourceCode cell-code" id="cb33"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">to_ssa</span>(<span class="cn">e</span>)</span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>    s <span class="op">=</span> <span class="fu">gensym</span>()</span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>    s, [(s,<span class="cn">e</span>)]</span>
+<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>We also want a utility to compute from SSA back to ordinary Julia code</p>
+<div id="79f2f443" class="cell" data-execution_count="30">
+<div class="sourceCode cell-code" id="cb34"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="fu">from_ssa</span>(sym, elist) <span class="op">=</span></span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">Expr</span>(<span class="op">:</span>block,</span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>         [<span class="fu">Expr</span>(<span class="op">:</span>(<span class="op">=</span>), s, <span class="cn">e</span>) for (s,<span class="cn">e</span>) <span class="kw">in</span> elist]<span class="op">...</span>,</span>
+<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a>         sym)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="31">
+<pre><code>from_ssa (generic function with 1 method)</code></pre>
+</div>
+</div>
+<p>As is often the case, an example is useful to illustrate the code.</p>
+<div id="1a04c107" class="cell" data-execution_count="31">
+<div class="sourceCode cell-code" id="cb36"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span></span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a>    s, elist <span class="op">=</span> <span class="fu">to_ssa</span>(</span>
+<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a>        <span class="kw">quote</span></span>
+<span id="cb36-4"><a href="#cb36-4" aria-hidden="true" tabindex="-1"></a>            x <span class="op">=</span> <span class="fl">10</span></span>
+<span id="cb36-5"><a href="#cb36-5" aria-hidden="true" tabindex="-1"></a>            x <span class="op">=</span> <span class="fl">10</span><span class="op">+</span>x<span class="op">+</span><span class="fl">1</span></span>
+<span id="cb36-6"><a href="#cb36-6" aria-hidden="true" tabindex="-1"></a>            y <span class="op">=</span> x<span class="op">*</span>x</span>
+<span id="cb36-7"><a href="#cb36-7" aria-hidden="true" tabindex="-1"></a>        <span class="kw">end</span>)</span>
+<span id="cb36-8"><a href="#cb36-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">from_ssa</span>(s, elist)</span>
+<span id="cb36-9"><a href="#cb36-9" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="32">
+<pre><code>quote
+    var"##225" = 10 + 10
+    var"##226" = var"##225" + 1
+    var"##227" = var"##226" * var"##226"
+    var"##227"
+end</code></pre>
+</div>
+</div>
+</section>
+<section id="derivative-function" class="level3" data-number="11.3.3">
+<h3 data-number="11.3.3" class="anchored" data-anchor-id="derivative-function"><span class="header-section-number">11.3.3</span> Derivative function</h3>
+<p>To set up our differentiation function, we will need some differentiation rules. We store this in a dictionary where the keys are different types of operations and functions, and the arguments are the arguments to those functions and their derivatives. Each rule takes expressions for the value of the function, the arguments, and the derivatives of the arguments, and then returns the derivative of the function. In some cases, we may want different methods associated with the same function, e.g.&nbsp;to distinguish between negation and subtraction or to provide a special case of the power function where the exponent is an integer constant.</p>
+<div id="dc82ccfe" class="cell" data-execution_count="32">
+<div class="sourceCode cell-code" id="cb38"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="fu">deriv_minus</span>(f,x,dx) <span class="op">=</span> <span class="op">:</span>(<span class="op">-$</span>dx)</span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a><span class="fu">deriv_minus</span>(f,x,y,dx,dy) <span class="op">=</span> <span class="op">:</span>(<span class="op">$</span>dx<span class="op">-$</span>dy)</span>
+<span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a><span class="fu">deriv_pow</span>(f,x,n <span class="op">::</span><span class="dt"> Int</span>, dx, dn) <span class="op">=</span> <span class="op">:</span>(<span class="op">$</span>n<span class="op">*$</span>x<span class="op">^$</span>(n<span class="op">-</span><span class="fl">1</span>)<span class="op">*$</span>dx)</span>
+<span id="cb38-4"><a href="#cb38-4" aria-hidden="true" tabindex="-1"></a><span class="fu">deriv_pow</span>(f,x,y,dx,dy) <span class="op">=</span> <span class="op">:</span>(<span class="op">$</span><span class="fu">f*</span>(<span class="op">$</span>dy<span class="op">/$</span>x<span class="op">*$</span>dx <span class="op">+</span> <span class="op">$</span><span class="fu">dy*log</span>(<span class="op">$</span>x)))</span>
+<span id="cb38-5"><a href="#cb38-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-6"><a href="#cb38-6" aria-hidden="true" tabindex="-1"></a>deriv_rules <span class="op">=</span> <span class="fu">Dict</span>(</span>
+<span id="cb38-7"><a href="#cb38-7" aria-hidden="true" tabindex="-1"></a>    <span class="op">:+</span>   <span class="op">=&gt;</span> (f,x,y,dx,dy) <span class="op">-&gt;</span> <span class="op">:</span>(<span class="op">$</span>dx<span class="op">+$</span>dy),</span>
+<span id="cb38-8"><a href="#cb38-8" aria-hidden="true" tabindex="-1"></a>    <span class="op">:*</span>   <span class="op">=&gt;</span> (f,x,y,dx,dy) <span class="op">-&gt;</span> <span class="op">:</span>(<span class="op">$</span>dx<span class="op">*$</span>y <span class="op">+</span> <span class="op">$</span>x<span class="op">*$</span>dy),</span>
+<span id="cb38-9"><a href="#cb38-9" aria-hidden="true" tabindex="-1"></a>    <span class="op">:/</span>   <span class="op">=&gt;</span> (f,x,y,dx,dy) <span class="op">-&gt;</span> <span class="op">:</span>((<span class="op">$</span>dx <span class="op">-</span> <span class="op">$</span>f<span class="op">*$</span>dy)<span class="op">/$</span>y),</span>
+<span id="cb38-10"><a href="#cb38-10" aria-hidden="true" tabindex="-1"></a>    <span class="op">:-</span>   <span class="op">=&gt;</span> deriv_minus,</span>
+<span id="cb38-11"><a href="#cb38-11" aria-hidden="true" tabindex="-1"></a>    <span class="op">:^</span>   <span class="op">=&gt;</span> deriv_pow,</span>
+<span id="cb38-12"><a href="#cb38-12" aria-hidden="true" tabindex="-1"></a>    <span class="op">:</span>log <span class="op">=&gt;</span> (f,x,dx)    <span class="op">-&gt;</span> <span class="op">:</span>(<span class="op">$</span>dx<span class="op">/$</span>x),</span>
+<span id="cb38-13"><a href="#cb38-13" aria-hidden="true" tabindex="-1"></a>    <span class="op">:</span>exp <span class="op">=&gt;</span> (f,x,dx)    <span class="op">-&gt;</span> <span class="op">:</span>(<span class="op">$</span>f<span class="op">*$</span>dx)</span>
+<span id="cb38-14"><a href="#cb38-14" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Now we are in a position to write code to simultaneously evaluate the expression and the derivative (with respect to some symbol <code>s</code>). To do this, it is helpful to give a (locally defined) name to each subexpression and its derivative, and to produce code that is a sequence of assignments to those names. We accumulate those assignments into a list (<code>elist</code>). An internal <code>process</code> function with different methods for different types of objects is used to generate the assignments for the subexpression values and the associated derivatives.</p>
+<div id="53822c8a" class="cell" data-execution_count="33">
+<div class="sourceCode cell-code" id="cb39"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">derivative</span>(s <span class="op">::</span><span class="dt"> Symbol</span>, <span class="cn">e</span> <span class="op">::</span><span class="dt"> Expr</span>)</span>
+<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Convert input to SSA form, set up generator</span></span>
+<span id="cb39-4"><a href="#cb39-4" aria-hidden="true" tabindex="-1"></a>    sym, elist <span class="op">=</span> <span class="fu">to_ssa</span>(<span class="cn">e</span>)</span>
+<span id="cb39-5"><a href="#cb39-5" aria-hidden="true" tabindex="-1"></a>    eresult, emit! <span class="op">=</span> <span class="fu">ssa_generator</span>()</span>
+<span id="cb39-6"><a href="#cb39-6" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb39-7"><a href="#cb39-7" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Derivatives of leaves, init with ds/ds = 1.</span></span>
+<span id="cb39-8"><a href="#cb39-8" aria-hidden="true" tabindex="-1"></a>    deriv_table <span class="op">=</span> <span class="fu">Dict</span><span class="dt">{Symbol,Any}</span>()</span>
+<span id="cb39-9"><a href="#cb39-9" aria-hidden="true" tabindex="-1"></a>    deriv_table[s] <span class="op">=</span> <span class="fl">1</span></span>
+<span id="cb39-10"><a href="#cb39-10" aria-hidden="true" tabindex="-1"></a>    <span class="fu">deriv</span>(<span class="cn">e</span> <span class="op">::</span><span class="dt"> Symbol</span>) <span class="op">=</span> <span class="fu">get</span>(deriv_table, <span class="cn">e</span>, <span class="fl">0</span>)</span>
+<span id="cb39-11"><a href="#cb39-11" aria-hidden="true" tabindex="-1"></a>    <span class="fu">deriv</span>(<span class="cn">e</span>) <span class="op">=</span> <span class="fl">0</span></span>
+<span id="cb39-12"><a href="#cb39-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-13"><a href="#cb39-13" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Rules to generate differentiation code</span></span>
+<span id="cb39-14"><a href="#cb39-14" aria-hidden="true" tabindex="-1"></a>    <span class="kw">function</span> <span class="fu">derivcode</span>(s, <span class="cn">e</span> <span class="op">::</span><span class="dt"> Expr</span>)</span>
+<span id="cb39-15"><a href="#cb39-15" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="cn">e</span>.head <span class="op">==</span> <span class="op">:</span>call</span>
+<span id="cb39-16"><a href="#cb39-16" aria-hidden="true" tabindex="-1"></a>            rule <span class="op">=</span> deriv_rules[<span class="cn">e</span>.args[<span class="fl">1</span>]]</span>
+<span id="cb39-17"><a href="#cb39-17" aria-hidden="true" tabindex="-1"></a>            dexpr <span class="op">=</span> <span class="fu">rule</span>(s, <span class="cn">e</span>.args[<span class="fl">2</span><span class="op">:</span><span class="kw">end</span>]<span class="op">...</span>,</span>
+<span id="cb39-18"><a href="#cb39-18" aria-hidden="true" tabindex="-1"></a>                         <span class="fu">deriv</span>.(<span class="cn">e</span>.args[<span class="fl">2</span><span class="op">:</span><span class="kw">end</span>])<span class="op">...</span>)</span>
+<span id="cb39-19"><a href="#cb39-19" aria-hidden="true" tabindex="-1"></a>            <span class="fu">emit!</span>(<span class="fu">to_ssa</span>(dexpr)<span class="op">...</span>)</span>
+<span id="cb39-20"><a href="#cb39-20" aria-hidden="true" tabindex="-1"></a>        <span class="cf">elseif</span> <span class="cn">e</span>.head <span class="op">==</span> <span class="op">:</span>tuple</span>
+<span id="cb39-21"><a href="#cb39-21" aria-hidden="true" tabindex="-1"></a>            <span class="fu">emit!</span>(<span class="fu">Expr</span>(<span class="op">:</span>tuple, <span class="fu">deriv</span>.(<span class="cn">e</span>.args)<span class="op">...</span>))</span>
+<span id="cb39-22"><a href="#cb39-22" aria-hidden="true" tabindex="-1"></a>        <span class="cf">else</span></span>
+<span id="cb39-23"><a href="#cb39-23" aria-hidden="true" tabindex="-1"></a>            <span class="fu">error</span>(<span class="st">"Unexpected expression of type </span><span class="sc">$</span>(<span class="cn">e</span>.head)<span class="st">"</span>)</span>
+<span id="cb39-24"><a href="#cb39-24" aria-hidden="true" tabindex="-1"></a>        <span class="cf">end</span></span>
+<span id="cb39-25"><a href="#cb39-25" aria-hidden="true" tabindex="-1"></a>    <span class="kw">end</span></span>
+<span id="cb39-26"><a href="#cb39-26" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb39-27"><a href="#cb39-27" aria-hidden="true" tabindex="-1"></a>    <span class="fu">derivcode</span>(s, <span class="cn">e</span>) <span class="op">=</span> <span class="fu">emit!</span>(<span class="fu">gensym</span>(), <span class="fu">deriv</span>(<span class="cn">e</span>))</span>
+<span id="cb39-28"><a href="#cb39-28" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb39-29"><a href="#cb39-29" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Produce code for results and derivatives</span></span>
+<span id="cb39-30"><a href="#cb39-30" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> (s,<span class="cn">e</span>) <span class="kw">in</span> elist</span>
+<span id="cb39-31"><a href="#cb39-31" aria-hidden="true" tabindex="-1"></a>        <span class="fu">emit!</span>(s,<span class="cn">e</span>)</span>
+<span id="cb39-32"><a href="#cb39-32" aria-hidden="true" tabindex="-1"></a>        deriv_table[s] <span class="op">=</span> <span class="fu">derivcode</span>(s, <span class="cn">e</span>)</span>
+<span id="cb39-33"><a href="#cb39-33" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
+<span id="cb39-34"><a href="#cb39-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-35"><a href="#cb39-35" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Add a tuple for return at the end (function + deriv)</span></span>
+<span id="cb39-36"><a href="#cb39-36" aria-hidden="true" tabindex="-1"></a>    <span class="fu">emit!</span>(<span class="fu">Expr</span>(<span class="op">:</span>tuple, sym, deriv_table[sym])), eresult</span>
+<span id="cb39-37"><a href="#cb39-37" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>As an example, consider computing the derivative of <span class="math inline">\(mx + b\)</span> with respect to <span class="math inline">\(x\)</span></p>
+<div id="3a4c8fd3" class="cell" data-execution_count="34">
+<div class="sourceCode cell-code" id="cb40"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a><span class="fu">from_ssa</span>(<span class="fu">derivative</span>(<span class="op">:</span>x, <span class="op">:</span>(m<span class="op">*</span>x<span class="op">+</span>b))<span class="op">...</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="35">
+<pre><code>quote
+    var"##228" = m * x
+    var"##230" = 0 * x
+    var"##231" = m * 1
+    var"##232" = var"##230" + var"##231"
+    var"##229" = var"##228" + b
+    var"##233" = var"##232" + 0
+    var"##234" = (var"##229", var"##233")
+    var"##234"
+end</code></pre>
+</div>
+</div>
+<p>Giving more comprehensible variable names, this is equivalent to</p>
+<div class="sourceCode" id="cb42"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a>y1 <span class="op">=</span> m <span class="op">*</span> x</span>
+<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a>dy1a <span class="op">=</span> <span class="fl">0</span> <span class="op">*</span> x</span>
+<span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a>dy1b <span class="op">=</span> m <span class="op">*</span> <span class="fl">1</span></span>
+<span id="cb42-4"><a href="#cb42-4" aria-hidden="true" tabindex="-1"></a>dy1 <span class="op">=</span> dy1a <span class="op">+</span> dy1b</span>
+<span id="cb42-5"><a href="#cb42-5" aria-hidden="true" tabindex="-1"></a>y2 <span class="op">=</span> y1 <span class="op">+</span> b</span>
+<span id="cb42-6"><a href="#cb42-6" aria-hidden="true" tabindex="-1"></a>dy2 <span class="op">=</span> dy1 <span class="op">+</span> <span class="fl">0</span></span>
+<span id="cb42-7"><a href="#cb42-7" aria-hidden="true" tabindex="-1"></a>result <span class="op">=</span> (y2, dy2)</span>
+<span id="cb42-8"><a href="#cb42-8" aria-hidden="true" tabindex="-1"></a>result</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>This is correct, but it is also a very complicated-looking way to compute <span class="math inline">\(m\)</span>! We therefore consider putting in some standard simplifications.</p>
+</section>
+<section id="simplification" class="level3" data-number="11.3.4">
+<h3 data-number="11.3.4" class="anchored" data-anchor-id="simplification"><span class="header-section-number">11.3.4</span> Simplification</h3>
+<p>There are many possible algebraic relationships that we can use to simplify derivatives. Some of these are relationships, like multiplication by zero, are things that we believe are safe but the compiler cannot safely do on our behalf<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a>. Others are things that the compiler could probably do on our behalf, but we might want to do on our own to understand how these things work.</p>
+<p>We will again use the matching rules on multiple dispatch to write our simplification rules as different methods under a common name. For example, the simplification rules for <span class="math inline">\(x + y\)</span> (where the prior expression is saved as <span class="math inline">\(e\)</span>) are:</p>
+<div id="5cab607b" class="cell" data-execution_count="35">
+<div class="sourceCode cell-code" id="cb43"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Rules to simplify e = x+y</span></span>
+<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a><span class="fu">simplify_add</span>(<span class="cn">e</span>, x <span class="op">::</span><span class="dt"> Number</span>, y <span class="op">::</span><span class="dt"> Number</span>) <span class="op">=</span> x<span class="op">+</span>y</span>
+<span id="cb43-3"><a href="#cb43-3" aria-hidden="true" tabindex="-1"></a><span class="fu">simplify_add</span>(<span class="cn">e</span>, x <span class="op">::</span><span class="dt"> Number</span>, y <span class="op">::</span><span class="dt"> Symbol</span>) <span class="op">=</span> x <span class="op">==</span> <span class="fl">0</span> ? y <span class="op">:</span> <span class="cn">e</span></span>
+<span id="cb43-4"><a href="#cb43-4" aria-hidden="true" tabindex="-1"></a><span class="fu">simplify_add</span>(<span class="cn">e</span>, x <span class="op">::</span><span class="dt"> Symbol</span>, y <span class="op">::</span><span class="dt"> Number</span>) <span class="op">=</span> y <span class="op">==</span> <span class="fl">0</span> ? x <span class="op">:</span> <span class="cn">e</span></span>
+<span id="cb43-5"><a href="#cb43-5" aria-hidden="true" tabindex="-1"></a><span class="fu">simplify_add</span>(<span class="cn">e</span>, x, y) <span class="op">=</span> <span class="cn">e</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>The rules for minus (unary and binary) are similar in flavor. We will give the unary and binary versions both the same name, and distinguish between the two cases based on the number of arguments that we see.</p>
+<div id="c35167a5" class="cell" data-execution_count="36">
+<div class="sourceCode cell-code" id="cb44"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Rules to simplify e = -x</span></span>
+<span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a><span class="fu">simplify_sub</span>(<span class="cn">e</span>, x <span class="op">::</span><span class="dt"> Number</span>) <span class="op">=</span> <span class="op">-</span>x</span>
+<span id="cb44-3"><a href="#cb44-3" aria-hidden="true" tabindex="-1"></a><span class="fu">simplify_sub</span>(<span class="cn">e</span>, x) <span class="op">=</span> <span class="cn">e</span></span>
+<span id="cb44-4"><a href="#cb44-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb44-5"><a href="#cb44-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Rules to simplify e = x-y</span></span>
+<span id="cb44-6"><a href="#cb44-6" aria-hidden="true" tabindex="-1"></a><span class="fu">simplify_sub</span>(<span class="cn">e</span>, x <span class="op">::</span><span class="dt"> Number</span>, y <span class="op">::</span><span class="dt"> Symbol</span>) <span class="op">=</span> x <span class="op">==</span> <span class="fl">0</span> ? <span class="op">:</span>(<span class="op">-$</span>y) <span class="op">:</span> <span class="cn">e</span></span>
+<span id="cb44-7"><a href="#cb44-7" aria-hidden="true" tabindex="-1"></a><span class="fu">simplify_sub</span>(<span class="cn">e</span>, x <span class="op">::</span><span class="dt"> Symbol</span>, y <span class="op">::</span><span class="dt"> Number</span>) <span class="op">=</span> y <span class="op">==</span> <span class="fl">0</span> ? y <span class="op">:</span> <span class="cn">e</span></span>
+<span id="cb44-8"><a href="#cb44-8" aria-hidden="true" tabindex="-1"></a><span class="fu">simplify_sub</span>(<span class="cn">e</span>, x, y) <span class="op">=</span> <span class="cn">e</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>With multiplication, we will use the ordinary observation that anything times zero should be zero, ignoring the peculiarities of floating point.</p>
+<div id="cea0b7e0" class="cell" data-execution_count="37">
+<div class="sourceCode cell-code" id="cb45"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Rules to simplify e = x*y</span></span>
+<span id="cb45-2"><a href="#cb45-2" aria-hidden="true" tabindex="-1"></a><span class="fu">simplify_mul</span>(<span class="cn">e</span>, x <span class="op">::</span><span class="dt"> Number</span>, y <span class="op">::</span><span class="dt"> Number</span>) <span class="op">=</span> x<span class="op">*</span>y</span>
+<span id="cb45-3"><a href="#cb45-3" aria-hidden="true" tabindex="-1"></a><span class="fu">simplify_mul</span>(<span class="cn">e</span>, x <span class="op">::</span><span class="dt"> Number</span>, y <span class="op">::</span><span class="dt"> Symbol</span>) <span class="op">=</span></span>
+<span id="cb45-4"><a href="#cb45-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span>     x <span class="op">==</span> <span class="fl">0</span>  <span class="fl">0</span></span>
+<span id="cb45-5"><a href="#cb45-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">elseif</span> x <span class="op">==</span> <span class="fl">1</span>  y</span>
+<span id="cb45-6"><a href="#cb45-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span>           <span class="cn">e</span></span>
+<span id="cb45-7"><a href="#cb45-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
+<span id="cb45-8"><a href="#cb45-8" aria-hidden="true" tabindex="-1"></a><span class="fu">simplify_mul</span>(<span class="cn">e</span>, x <span class="op">::</span><span class="dt"> Symbol</span>, y <span class="op">::</span><span class="dt"> Number</span>) <span class="op">=</span></span>
+<span id="cb45-9"><a href="#cb45-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span>     y <span class="op">==</span> <span class="fl">0</span>  <span class="fl">0</span></span>
+<span id="cb45-10"><a href="#cb45-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">elseif</span> y <span class="op">==</span> <span class="fl">1</span>  x</span>
+<span id="cb45-11"><a href="#cb45-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span>           <span class="cn">e</span></span>
+<span id="cb45-12"><a href="#cb45-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
+<span id="cb45-13"><a href="#cb45-13" aria-hidden="true" tabindex="-1"></a><span class="fu">simplify_mul</span>(<span class="cn">e</span>, x, y) <span class="op">=</span> <span class="cn">e</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Finally, we define rules for simplifying quotients and powers.</p>
+<div id="0dc00c55" class="cell" data-execution_count="38">
+<div class="sourceCode cell-code" id="cb46"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Rules to simplify e = x/y</span></span>
+<span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a><span class="fu">simplify_div</span>(<span class="cn">e</span>, x <span class="op">::</span><span class="dt"> Number</span>, y <span class="op">::</span><span class="dt"> Number</span>) <span class="op">=</span> x<span class="op">/</span>y</span>
+<span id="cb46-3"><a href="#cb46-3" aria-hidden="true" tabindex="-1"></a><span class="fu">simplify_div</span>(<span class="cn">e</span>, x <span class="op">::</span><span class="dt"> Symbol</span>, y <span class="op">::</span><span class="dt"> Number</span>) <span class="op">=</span> y <span class="op">==</span> <span class="fl">1</span> ? x <span class="op">:</span> <span class="cn">e</span></span>
+<span id="cb46-4"><a href="#cb46-4" aria-hidden="true" tabindex="-1"></a><span class="fu">simplify_div</span>(<span class="cn">e</span>, x <span class="op">::</span><span class="dt"> Number</span>, y <span class="op">::</span><span class="dt"> Symbol</span>) <span class="op">=</span> x <span class="op">==</span> <span class="fl">0</span> ? <span class="fl">0</span> <span class="op">:</span> <span class="cn">e</span></span>
+<span id="cb46-5"><a href="#cb46-5" aria-hidden="true" tabindex="-1"></a><span class="fu">simplify_div</span>(<span class="cn">e</span>, x, y) <span class="op">=</span> <span class="cn">e</span></span>
+<span id="cb46-6"><a href="#cb46-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb46-7"><a href="#cb46-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Simplify powers</span></span>
+<span id="cb46-8"><a href="#cb46-8" aria-hidden="true" tabindex="-1"></a><span class="fu">simplify_pow</span>(<span class="cn">e</span>, x <span class="op">::</span><span class="dt"> Symbol</span>, n <span class="op">::</span><span class="dt"> Number</span>) <span class="op">=</span></span>
+<span id="cb46-9"><a href="#cb46-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span>     n <span class="op">==</span> <span class="fl">1</span>  x</span>
+<span id="cb46-10"><a href="#cb46-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">elseif</span> n <span class="op">==</span> <span class="fl">0</span>  <span class="fl">1</span></span>
+<span id="cb46-11"><a href="#cb46-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span>           <span class="cn">e</span></span>
+<span id="cb46-12"><a href="#cb46-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
+<span id="cb46-13"><a href="#cb46-13" aria-hidden="true" tabindex="-1"></a><span class="fu">simplify_pow</span>(<span class="cn">e</span>, x, n) <span class="op">=</span> <span class="cn">e</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>To simplify a line in an SSA assignment, we look up the appropriate rule function in a table (as we did with differentiation rules) and apply it.</p>
+<div id="881210cb" class="cell" data-execution_count="39">
+<div class="sourceCode cell-code" id="cb47"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a>simplify_rules <span class="op">=</span> <span class="fu">Dict</span>(</span>
+<span id="cb47-2"><a href="#cb47-2" aria-hidden="true" tabindex="-1"></a>    <span class="op">:+</span> <span class="op">=&gt;</span> simplify_add,</span>
+<span id="cb47-3"><a href="#cb47-3" aria-hidden="true" tabindex="-1"></a>    <span class="op">:-</span> <span class="op">=&gt;</span> simplify_sub,</span>
+<span id="cb47-4"><a href="#cb47-4" aria-hidden="true" tabindex="-1"></a>    <span class="op">:*</span> <span class="op">=&gt;</span> simplify_mul,</span>
+<span id="cb47-5"><a href="#cb47-5" aria-hidden="true" tabindex="-1"></a>    <span class="op">:/</span> <span class="op">=&gt;</span> simplify_div,</span>
+<span id="cb47-6"><a href="#cb47-6" aria-hidden="true" tabindex="-1"></a>    <span class="op">:^</span> <span class="op">=&gt;</span> simplify_pow)</span>
+<span id="cb47-7"><a href="#cb47-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb47-8"><a href="#cb47-8" aria-hidden="true" tabindex="-1"></a><span class="fu">simplify_null</span>(<span class="cn">e</span>, args<span class="op">...</span>) <span class="op">=</span> <span class="cn">e</span></span>
+<span id="cb47-9"><a href="#cb47-9" aria-hidden="true" tabindex="-1"></a><span class="fu">simplify</span>(<span class="cn">e</span>) <span class="op">=</span> <span class="cn">e</span></span>
+<span id="cb47-10"><a href="#cb47-10" aria-hidden="true" tabindex="-1"></a><span class="fu">simplify</span>(<span class="cn">e</span> <span class="op">::</span><span class="dt"> Expr</span>) <span class="op">=</span></span>
+<span id="cb47-11"><a href="#cb47-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="cn">e</span>.head <span class="op">==</span> <span class="op">:</span>call</span>
+<span id="cb47-12"><a href="#cb47-12" aria-hidden="true" tabindex="-1"></a>        rule <span class="op">=</span> <span class="fu">get</span>(simplify_rules, <span class="cn">e</span>.args[<span class="fl">1</span>], simplify_null)</span>
+<span id="cb47-13"><a href="#cb47-13" aria-hidden="true" tabindex="-1"></a>        <span class="fu">rule</span>(<span class="cn">e</span>, <span class="cn">e</span>.args[<span class="fl">2</span><span class="op">:</span><span class="kw">end</span>]<span class="op">...</span>)</span>
+<span id="cb47-14"><a href="#cb47-14" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span></span>
+<span id="cb47-15"><a href="#cb47-15" aria-hidden="true" tabindex="-1"></a>        <span class="cn">e</span></span>
+<span id="cb47-16"><a href="#cb47-16" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="40">
+<pre><code>simplify (generic function with 2 methods)</code></pre>
+</div>
+</div>
+<p>Putting everything together, our rule for simplifying code in SSA form is:</p>
+<ul>
+<li>Look up whether a previous simplification replaced any arguments with constants or with other symbols. If a replacement was also replaced earlier, reply the rule recursively.</li>
+<li>Apply the appropriate simplification rule.</li>
+<li>If the expression now looks like <code>(symbol, x)</code> where <code>x</code> is a leaf (a constant or another symbol), make a record in the lookup table to replace future references to <code>symbol</code> with references to <code>x</code>.</li>
+</ul>
+<p>The following code carries out this task.</p>
+<div id="22b1496f" class="cell" data-execution_count="40">
+<div class="sourceCode cell-code" id="cb49"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">simplify_ssa</span>(sym, elist)</span>
+<span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb49-3"><a href="#cb49-3" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Set up and add to replacement table</span></span>
+<span id="cb49-4"><a href="#cb49-4" aria-hidden="true" tabindex="-1"></a>    replacements <span class="op">=</span> <span class="fu">Dict</span><span class="dt">{Symbol,Any}</span>()</span>
+<span id="cb49-5"><a href="#cb49-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">function</span> <span class="fu">replacement</span>(s,<span class="cn">e</span>)</span>
+<span id="cb49-6"><a href="#cb49-6" aria-hidden="true" tabindex="-1"></a>        replacements[s] <span class="op">=</span> <span class="cn">e</span></span>
+<span id="cb49-7"><a href="#cb49-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">end</span></span>
+<span id="cb49-8"><a href="#cb49-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb49-9"><a href="#cb49-9" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Apply a replacement policy</span></span>
+<span id="cb49-10"><a href="#cb49-10" aria-hidden="true" tabindex="-1"></a>    <span class="fu">replace</span>(<span class="cn">e</span>) <span class="op">=</span> <span class="cn">e</span></span>
+<span id="cb49-11"><a href="#cb49-11" aria-hidden="true" tabindex="-1"></a>    <span class="fu">replace</span>(s <span class="op">::</span><span class="dt"> Symbol</span>) <span class="op">=</span></span>
+<span id="cb49-12"><a href="#cb49-12" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> s <span class="kw">in</span> <span class="fu">keys</span>(replacements)</span>
+<span id="cb49-13"><a href="#cb49-13" aria-hidden="true" tabindex="-1"></a>            <span class="fu">replace</span>(replacements[s])</span>
+<span id="cb49-14"><a href="#cb49-14" aria-hidden="true" tabindex="-1"></a>        <span class="cf">else</span></span>
+<span id="cb49-15"><a href="#cb49-15" aria-hidden="true" tabindex="-1"></a>            s</span>
+<span id="cb49-16"><a href="#cb49-16" aria-hidden="true" tabindex="-1"></a>        <span class="cf">end</span></span>
+<span id="cb49-17"><a href="#cb49-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb49-18"><a href="#cb49-18" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Simplify each term</span></span>
+<span id="cb49-19"><a href="#cb49-19" aria-hidden="true" tabindex="-1"></a>    eresult, emit! <span class="op">=</span> <span class="fu">ssa_generator</span>()</span>
+<span id="cb49-20"><a href="#cb49-20" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> (s,<span class="cn">e</span>) <span class="kw">in</span> elist</span>
+<span id="cb49-21"><a href="#cb49-21" aria-hidden="true" tabindex="-1"></a>        <span class="cn">e</span> <span class="op">=</span> <span class="cn">e</span> isa <span class="dt">Expr</span> ? <span class="fu">Expr</span>(<span class="cn">e</span>.head, <span class="fu">replace</span>.(<span class="cn">e</span>.args)<span class="op">...</span>) <span class="op">:</span> <span class="cn">e</span></span>
+<span id="cb49-22"><a href="#cb49-22" aria-hidden="true" tabindex="-1"></a>        enew <span class="op">=</span> <span class="fu">simplify</span>(<span class="cn">e</span>)</span>
+<span id="cb49-23"><a href="#cb49-23" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> enew isa <span class="dt">Number</span> <span class="op">||</span> enew isa <span class="dt">Symbol</span></span>
+<span id="cb49-24"><a href="#cb49-24" aria-hidden="true" tabindex="-1"></a>            <span class="fu">replacement</span>(s, enew)</span>
+<span id="cb49-25"><a href="#cb49-25" aria-hidden="true" tabindex="-1"></a>        <span class="cf">end</span></span>
+<span id="cb49-26"><a href="#cb49-26" aria-hidden="true" tabindex="-1"></a>        <span class="fu">emit!</span>(s, enew)</span>
+<span id="cb49-27"><a href="#cb49-27" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
+<span id="cb49-28"><a href="#cb49-28" aria-hidden="true" tabindex="-1"></a>    <span class="fu">replace</span>(sym), eresult</span>
+<span id="cb49-29"><a href="#cb49-29" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Finally, we do <em>dead code elimination</em>, keeping only “live” computations on which the final result depends. Liveness is computed recursively: the final result is live, and anything that a live variable depends on is live. Because in SSA each expression depends only on previous results, we can compute liveness by traversing the list from back to front and updating what we know to be live as we go.</p>
+<div id="3aa3bc76" class="cell" data-execution_count="41">
+<div class="sourceCode cell-code" id="cb50"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">prune_ssa</span>(sym, elist)</span>
+<span id="cb50-2"><a href="#cb50-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb50-3"><a href="#cb50-3" aria-hidden="true" tabindex="-1"></a>    <span class="co"># The end symbol is live</span></span>
+<span id="cb50-4"><a href="#cb50-4" aria-hidden="true" tabindex="-1"></a>    live <span class="op">=</span> <span class="fu">Set</span>([sym])</span>
+<span id="cb50-5"><a href="#cb50-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb50-6"><a href="#cb50-6" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Propogate liveness</span></span>
+<span id="cb50-7"><a href="#cb50-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mark_live</span>(s <span class="op">::</span><span class="dt"> Symbol</span>) <span class="op">=</span> <span class="fu">push!</span>(live, s)</span>
+<span id="cb50-8"><a href="#cb50-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mark_live</span>(<span class="cn">e</span> <span class="op">::</span><span class="dt"> Expr</span>) <span class="op">=</span> <span class="fu">mark_live</span>.(<span class="cn">e</span>.args)</span>
+<span id="cb50-9"><a href="#cb50-9" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mark_live</span>(<span class="cn">e</span>) <span class="op">=</span> <span class="cn">nothing</span></span>
+<span id="cb50-10"><a href="#cb50-10" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb50-11"><a href="#cb50-11" aria-hidden="true" tabindex="-1"></a>    <span class="co"># If the RHS is live, so is anything it depends on</span></span>
+<span id="cb50-12"><a href="#cb50-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> (s,<span class="cn">e</span>) <span class="kw">in</span> <span class="fu">reverse</span>(elist)</span>
+<span id="cb50-13"><a href="#cb50-13" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> s <span class="kw">in</span> live</span>
+<span id="cb50-14"><a href="#cb50-14" aria-hidden="true" tabindex="-1"></a>            <span class="fu">mark_live</span>(<span class="cn">e</span>)</span>
+<span id="cb50-15"><a href="#cb50-15" aria-hidden="true" tabindex="-1"></a>        <span class="cf">end</span></span>
+<span id="cb50-16"><a href="#cb50-16" aria-hidden="true" tabindex="-1"></a>    <span class="cf">end</span></span>
+<span id="cb50-17"><a href="#cb50-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb50-18"><a href="#cb50-18" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Return only the live expressions</span></span>
+<span id="cb50-19"><a href="#cb50-19" aria-hidden="true" tabindex="-1"></a>    sym, <span class="fu">filter!</span>(p <span class="op">-&gt;</span> p[<span class="fl">1</span>] <span class="kw">in</span> live, elist)</span>
+<span id="cb50-20"><a href="#cb50-20" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Repeating our experiment with differentiating <span class="math inline">\(mx + b\)</span> but including simplification and pruning, we get a much terser generated code.</p>
+<div id="5c8efd96" class="cell" data-execution_count="42">
+<div class="sourceCode cell-code" id="cb51"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a><span class="fu">from_ssa</span>(</span>
+<span id="cb51-2"><a href="#cb51-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">prune_ssa</span>(</span>
+<span id="cb51-3"><a href="#cb51-3" aria-hidden="true" tabindex="-1"></a>        <span class="fu">simplify_ssa</span>(</span>
+<span id="cb51-4"><a href="#cb51-4" aria-hidden="true" tabindex="-1"></a>            <span class="fu">derivative</span>(<span class="op">:</span>x, <span class="op">:</span>(m<span class="op">*</span>x<span class="op">+</span>b))<span class="op">...</span>)<span class="op">...</span>)<span class="op">...</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="43">
+<pre><code>quote
+    var"##235" = m * x
+    var"##236" = var"##235" + b
+    var"##241" = (var"##236", m)
+    var"##241"
+end</code></pre>
+</div>
+</div>
+</section>
+<section id="the-macro" class="level3" data-number="11.3.5">
+<h3 data-number="11.3.5" class="anchored" data-anchor-id="the-macro"><span class="header-section-number">11.3.5</span> The macro</h3>
+<p>Finally, we package the derivatives into a macro. The macro gets the derivative information from the <code>derivative</code> function and packages it into a block that at the end returns the final expression value and derivative as a tuple. We note that the namespace for macros is different from the namespace for functions, so it is fine to use the same name (<code>derivative</code>) for both our main function and for the macro that calls it. Note that we escape the full output in this case – we want to be able to use the external names, and we only write to unique local symbols.</p>
+<div id="78c2c566" class="cell" data-execution_count="43">
+<div class="sourceCode cell-code" id="cb53"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true" tabindex="-1"></a><span class="kw">macro</span> <span class="fu">derivative</span>(s <span class="op">::</span><span class="dt"> Symbol</span>, <span class="cn">e</span> <span class="op">::</span><span class="dt"> Expr</span>)</span>
+<span id="cb53-2"><a href="#cb53-2" aria-hidden="true" tabindex="-1"></a>    sym, elist <span class="op">=</span> <span class="fu">derivative</span>(s, <span class="cn">e</span>)</span>
+<span id="cb53-3"><a href="#cb53-3" aria-hidden="true" tabindex="-1"></a>    sym, elist <span class="op">=</span> <span class="fu">simplify_ssa</span>(sym, elist)</span>
+<span id="cb53-4"><a href="#cb53-4" aria-hidden="true" tabindex="-1"></a>    sym, elist <span class="op">=</span> <span class="fu">prune_ssa</span>(sym, elist)</span>
+<span id="cb53-5"><a href="#cb53-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">esc</span>(<span class="fu">from_ssa</span>(sym, elist))</span>
+<span id="cb53-6"><a href="#cb53-6" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>We will test out the macro on a moderately messy expression that is slightly tedious to compute by hand, and compare our result to the (slightly tedious) hand computation.</p>
+<div id="30bfad10" class="cell" data-execution_count="44">
+<div class="sourceCode cell-code" id="cb54"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span></span>
+<span id="cb54-2"><a href="#cb54-2" aria-hidden="true" tabindex="-1"></a>    <span class="co"># An expression and a hand-computed derivative</span></span>
+<span id="cb54-3"><a href="#cb54-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">f</span>(x) <span class="op">=</span> <span class="fu">-log</span>(x<span class="op">^</span><span class="fl">2</span> <span class="op">+</span> <span class="fl">2</span><span class="fu">*exp</span>(x) <span class="op">+</span> (x<span class="op">+</span><span class="fl">1</span>)<span class="op">/</span>x)</span>
+<span id="cb54-4"><a href="#cb54-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">df</span>(x) <span class="op">=</span></span>
+<span id="cb54-5"><a href="#cb54-5" aria-hidden="true" tabindex="-1"></a>        <span class="fu">-</span>(<span class="fl">2</span><span class="op">*</span>x <span class="op">+</span> <span class="fl">2</span><span class="fu">*exp</span>(x) <span class="op">-</span><span class="fl">1</span><span class="op">/</span>x<span class="op">^</span><span class="fl">2</span>)<span class="op">/</span></span>
+<span id="cb54-6"><a href="#cb54-6" aria-hidden="true" tabindex="-1"></a>        (x<span class="op">^</span><span class="fl">2</span> <span class="op">+</span> <span class="fl">2</span><span class="fu">*exp</span>(x) <span class="op">+</span> (x<span class="op">+</span><span class="fl">1</span>)<span class="op">/</span>x)</span>
+<span id="cb54-7"><a href="#cb54-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb54-8"><a href="#cb54-8" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Autodiff of the same expression</span></span>
+<span id="cb54-9"><a href="#cb54-9" aria-hidden="true" tabindex="-1"></a>    <span class="fu">g</span>(x) <span class="op">=</span> <span class="pp">@derivative</span>(x, <span class="fu">-log</span>(x<span class="op">^</span><span class="fl">2</span> <span class="op">+</span> <span class="fl">2</span><span class="fu">*exp</span>(x) <span class="op">+</span> (x<span class="op">+</span><span class="fl">1</span>)<span class="op">/</span>x))</span>
+<span id="cb54-10"><a href="#cb54-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb54-11"><a href="#cb54-11" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Check that the results agree up to roundoff effects</span></span>
+<span id="cb54-12"><a href="#cb54-12" aria-hidden="true" tabindex="-1"></a>    xtest <span class="op">=</span> <span class="fl">2.3</span></span>
+<span id="cb54-13"><a href="#cb54-13" aria-hidden="true" tabindex="-1"></a>    gx, dgx <span class="op">=</span> <span class="fu">g</span>(xtest)</span>
+<span id="cb54-14"><a href="#cb54-14" aria-hidden="true" tabindex="-1"></a>    gx <span class="op">≈</span> <span class="fu">f</span>(xtest) <span class="op">&amp;&amp;</span> dgx <span class="op">≈</span> <span class="fu">df</span>(xtest)</span>
+<span id="cb54-15"><a href="#cb54-15" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="45">
+<pre><code>true</code></pre>
+</div>
+</div>
+
+
+</section>
+</section>
+<section id="footnotes" class="footnotes footnotes-end-of-document" role="doc-endnotes">
+<hr>
+<ol>
+<li id="fn1"><p>In IEEE floating point, <code>0 * Inf</code> is a <code>NaN</code>, not a zero. The compiler does not know that we don’t expect infinities in the code, and so cannot safely eliminate products with 0.<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const onCopySuccess = function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  }
+  const getTextToCopy = function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+    text: getTextToCopy
+  });
+  clipboard.on('success', onCopySuccess);
+  if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+    // For code content inside modals, clipBoardJS needs to be initialized with a container option
+    // TODO: Check when it could be a function (https://github.com/zenorocha/clipboard.js/issues/860)
+    const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+      text: getTextToCopy,
+      container: window.document.getElementById('quarto-embedded-source-code-modal')
+    });
+    clipboardModal.on('success', onCopySuccess);
+  }
+    var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+    var mailtoRegex = new RegExp(/^mailto:/);
+      var filterRegex = new RegExp('/' + window.location.host + '/');
+    var isInternal = (href) => {
+        return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+    }
+    // Inspect non-navigation links and adorn them if external
+ 	var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+    for (var i=0; i<links.length; i++) {
+      const link = links[i];
+      if (!isInternal(link.href)) {
+        // undo the damage that might have been done by quarto-nav.js in the case of
+        // links that we want to consider external
+        if (link.dataset.originalHref !== undefined) {
+          link.href = link.dataset.originalHref;
+        }
+      }
+    }
+  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+    const config = {
+      allowHTML: true,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start',
+    };
+    if (contentFn) {
+      config.content = contentFn;
+    }
+    if (onTriggerFn) {
+      config.onTrigger = onTriggerFn;
+    }
+    if (onUntriggerFn) {
+      config.onUntrigger = onUntriggerFn;
+    }
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      if (note) {
+        return note.innerHTML;
+      } else {
+        return "";
+      }
+    });
+  }
+  const xrefs = window.document.querySelectorAll('a.quarto-xref');
+  const processXRef = (id, note) => {
+    // Strip column container classes
+    const stripColumnClz = (el) => {
+      el.classList.remove("page-full", "page-columns");
+      if (el.children) {
+        for (const child of el.children) {
+          stripColumnClz(child);
+        }
+      }
+    }
+    stripColumnClz(note)
+    if (id === null || id.startsWith('sec-')) {
+      // Special case sections, only their first couple elements
+      const container = document.createElement("div");
+      if (note.children && note.children.length > 2) {
+        container.appendChild(note.children[0].cloneNode(true));
+        for (let i = 1; i < note.children.length; i++) {
+          const child = note.children[i];
+          if (child.tagName === "P" && child.innerText === "") {
+            continue;
+          } else {
+            container.appendChild(child.cloneNode(true));
+            break;
+          }
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(container);
+        }
+        return container.innerHTML
+      } else {
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        return note.innerHTML;
+      }
+    } else {
+      // Remove any anchor links if they are present
+      const anchorLink = note.querySelector('a.anchorjs-link');
+      if (anchorLink) {
+        anchorLink.remove();
+      }
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(note);
+      }
+      // TODO in 1.5, we should make sure this works without a callout special case
+      if (note.classList.contains("callout")) {
+        return note.outerHTML;
+      } else {
+        return note.innerHTML;
+      }
+    }
+  }
+  for (var i=0; i<xrefs.length; i++) {
+    const xref = xrefs[i];
+    tippyHover(xref, undefined, function(instance) {
+      instance.disable();
+      let url = xref.getAttribute('href');
+      let hash = undefined; 
+      if (url.startsWith('#')) {
+        hash = url;
+      } else {
+        try { hash = new URL(url).hash; } catch {}
+      }
+      if (hash) {
+        const id = hash.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note !== null) {
+          try {
+            const html = processXRef(id, note.cloneNode(true));
+            instance.setContent(html);
+          } finally {
+            instance.enable();
+            instance.show();
+          }
+        } else {
+          // See if we can fetch this
+          fetch(url.split('#')[0])
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.getElementById(id);
+            if (note !== null) {
+              const html = processXRef(id, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      } else {
+        // See if we can fetch a full url (with no hash to target)
+        // This is a special case and we should probably do some content thinning / targeting
+        fetch(url)
+        .then(res => res.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const htmlDoc = parser.parseFromString(html, "text/html");
+          const note = htmlDoc.querySelector('main.content');
+          if (note !== null) {
+            // This should only happen for chapter cross references
+            // (since there is no id in the URL)
+            // remove the first header
+            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+              note.children[0].remove();
+            }
+            const html = processXRef(null, note);
+            instance.setContent(html);
+          } 
+        }).finally(() => {
+          instance.enable();
+          instance.show();
+        });
+      }
+    }, function(instance) {
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            div.style.left = 0;
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+        // Handle positioning of the toggle
+    window.addEventListener(
+      "resize",
+      throttle(() => {
+        elRect = undefined;
+        if (selectedAnnoteEl) {
+          selectCodeLines(selectedAnnoteEl);
+        }
+      }, 10)
+    );
+    function throttle(fn, ms) {
+    let throttle = false;
+    let timer;
+      return (...args) => {
+        if(!throttle) { // first call gets through
+            fn.apply(this, args);
+            throttle = true;
+        } else { // all the others get throttled
+            if(timer) clearTimeout(timer); // cancel #2
+            timer = setTimeout(() => {
+              fn.apply(this, args);
+              timer = throttle = false;
+            }, ms);
+        }
+      };
+    }
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="../01-Fund1d/03-Approximation.html" class="pagination-link" aria-label="Approximation">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Approximation</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../01-Fund1d/05-NumDiff.html" class="pagination-link" aria-label="Numerical Differentiation">
+        <span class="nav-page-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Numerical Differentiation</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
