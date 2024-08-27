@@ -1,0 +1,6 @@
+# Latent Factors and Matrix Factorization
+
+Matrices as data vs matrices in linear algebra - stacked/multimodal vs multiway data
+SVD, PCA, etc
+ID and CUR
+NMF and parts decompositions

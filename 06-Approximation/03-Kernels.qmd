@@ -1,0 +1,6 @@
+# Kernels and RBFs
+
+Interpretations
+Error analysis
+Computing for modest n
+Computing for large n

@@ -1,0 +1,4 @@
+# Nonlinear Equations and Unconstrained Optimization
+
+Global vs local search
+Zeroth order methods

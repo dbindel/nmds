@@ -1,0 +1,10 @@
+# Signals and Transforms {#sec-signals-ch}
+
+Linear ODEs, linear difference equations, etc
+Convolutions for differential and difference equations
+Convolutions in probability
+Auto-regressive models
+Fast Fourier transforms
+Toeplitz and Hankel matrices
+Displacement rank and superfast solvers
+Chebyshev-Fourier connection

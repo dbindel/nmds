@@ -1,0 +1,171 @@
+project:
+  type: book
+
+# Focus on title subjects: numerical methods (continuous math,
+# primarily) for data science (drives the choice of examples and some
+# of the perspective).
+# Classically trained NA: not just *a* way to compute, but many ways
+# to compute based on considerations of structure of the problem and
+# the machine and of cost/accuracy tradeoffs.
+# Rich interplay between algorithms, analysis,
+# and computational practicalities (machine architecture) including
+# "data science thinking" driving algorithms in some cases.
+#
+# The scope is far from exhaustive, but it is expansive.  Have tried
+# to curate based on what I would want for my own courses.  Still too
+# much for a single semester, but allows for some variation in topics,
+# as well as giving students the opportunity to explore some on their
+# own.  A significant portion can be covered in two semesters.  At
+# Cornell, first four sections cover a slight superset of 4220, while
+# the last five cover topics from a graduate course (CS 6241).
+#
+# In addition to ordinary HW questions and questions embedded in the
+# text, a number of short projects.  Should mostly be
+# language-agnostic, but example code is done in Julia, using the
+# Quarto environment.
+
+# Planned structure
+# - Background (including Julia and backslash, calls to 1D solvers,
+#   machine rep'ns, probability incl Markov chains)
+# - Fundamentals in 1D
+#   - Notions of error and floating point
+#   - 1D function approximation
+#   - 1D autodiff
+#   - 1D numerical differentiation
+#   - 1D quadrature
+#   - Root finding and optimization in 1D
+#   - Basics of computing with randomness
+# - Numerical linear algebra
+#   - Linear systems
+#   - Least squares
+#   - Eigenvalue problems and the SVD
+#   - Signals, transforms, and FFT
+#   - Stationary iterations
+#   - Krylov subspaces
+# - Nonlinear equations and optimization
+#   - Multidimensional differentiation
+#   - Nonlinear equations and optimization
+#   - Continuation and bifurcation
+#   - Constrained problems
+#   - Methods for nonlinear least squares
+# - Computing with randomness
+#   - Sampling from multivariate distributions
+#   - Multidimensional quadrature and Monte Carlo
+#   - Uncertainty quantification
+#   - KL expansion and related
+#   - Randomized solvers (randNLA, RANSAC, SGD and co)
+# - Dimensionality reduction
+#   - Latent factor models and matrix factorization
+#   - Latent factor models and tensors
+#   - Nonlinear dimensionality reduction
+# - Function approximation and supervised learning
+#   - Function approximation fundamentals
+#   - Low-dimensional structure in function approximation
+#   - Function approximation with kernels
+#   - Neural networks?
+# - Numerics for network science
+#   - Matrices associated with graphs
+#   - Function approximation on graphs
+#   - Graph clustering and partitioning
+#   - Centrality measures
+# - System identification and learned dynamics
+#   - Fundamentals
+#   - Model reduction
+#   - Learning linear system dynamics
+#   - Learned dynamics and extrapolation
+#   - Koopman theory and lifting
+#   - Learning nonlinear dynamics
+#   - Design of experiments
+
+book:
+  title: "Numerical Methods for Data Science"
+  author: "David Bindel"
+  chapters:
+    - index.qmd
+    - intro.qmd
+    - part: 00-Background/00-Intro.qmd
+      chapters: 
+        - 00-Background/01-Julia.qmd
+        - 00-Background/02-Performance.qmd
+        - 00-Background/03-LA.qmd
+        - 00-Background/04-Calculus.qmd
+        - 00-Background/05-Optimization.qmd
+        - 00-Background/06-Probability.qmd
+    - part: 01-Fund1d/00-Intro.qmd
+      chapters:
+        - 01-Fund1d/01-Error.qmd
+        - 01-Fund1d/02-Arithmetic.qmd
+        - 01-Fund1d/03-Approximation.qmd
+        - 01-Fund1d/04-AutoDiff.qmd
+        - 01-Fund1d/05-NumDiff.qmd
+        - 01-Fund1d/06-Quadrature.qmd
+        - 01-Fund1d/07-Roots-Opt.qmd
+        - 01-Fund1d/08-Random.qmd
+    - part: 02-NLA/00-Intro.qmd
+      chapters:
+        - 02-NLA/01-Systems.qmd
+        - 02-NLA/02-Least-Squares.qmd
+        - 02-NLA/03-Eigenvalues.qmd
+        - 02-NLA/04-Signals.qmd
+        - 02-NLA/05-Stationary.qmd
+        - 02-NLA/06-Krylov.qmd
+    - part: 03-Nonlinear/00-Intro.qmd
+      chapters:
+        - 03-Nonlinear/01-Calculus.qmd
+        - 03-Nonlinear/02-Nonlinear.qmd
+        - 03-Nonlinear/03-Continuation.qmd
+        - 03-Nonlinear/04-Constrained.qmd
+        - 03-Nonlinear/05-Least-Squares.qmd
+    - part: 04-Random/00-Intro.qmd
+      chapters:
+        - 04-Random/01-Sampling.qmd
+        - 04-Random/02-Monte-Carlo.qmd
+        - 04-Random/03-Solvers.qmd
+        - 04-Random/04-UQ.qmd
+    - part: 05-Reduction/00-Intro.qmd
+      chapters:
+        - 05-Reduction/01-Matrix.qmd
+        - 05-Reduction/02-Tensor.qmd
+        - 05-Reduction/03-Nonlinear.qmd
+    - part: 06-Approximation/00-Intro.qmd
+      chapters:
+        - 06-Approximation/01-Concepts.qmd
+        - 06-Approximation/02-Low-Dimension.qmd
+        - 06-Approximation/03-Kernels.qmd
+        - 06-Approximation/04-NN.qmd
+    - part: 07-Networks/00-Intro.qmd
+      chapters:
+        - 07-Networks/01-Matrices.qmd
+        - 07-Networks/02-Functions.qmd
+        - 07-Networks/03-Cluster.qmd
+        - 07-Networks/04-Centrality.qmd
+    - part: 08-Dynamics/00-Intro.qmd
+      chapters:
+        - 08-Dynamics/01-Fundamentals.qmd
+        - 08-Dynamics/02-Model-Reduction.qmd
+        - 08-Dynamics/03-Linear.qmd
+        - 08-Dynamics/04-Extrapolation.qmd
+        - 08-Dynamics/05-Koopman.qmd
+        - 08-Dynamics/06-Nonlinear.qmd
+    - references.qmd
+
+bibliography: references.bib
+
+engine: knitr
+
+format:
+  html:
+    theme: cosmo
+  pdf:
+    documentclass: scrreprt
+    pdf-engine: lualatex
+    include-in-header:
+      text: |
+          \usepackage{amsmath}
+          \usepackage{amssymb}
+          \usepackage{fontspec}
+          \usepackage{polyglossia}
+          \setmonofont{DejaVu Sans Mono}[Scale=MatchLowercase]
+          \input{_common.tex}
+
+

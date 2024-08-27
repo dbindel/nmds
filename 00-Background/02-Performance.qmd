@@ -1,0 +1,1275 @@
+# Performance Basics {#sec-performance-ch}
+
+> "Are we there yet?"  
+> --- small children everywhere
+
+Numerical code should be right enough and fast enough.  Correctness
+comes first, but we are also impatient, and want our codes to run
+fast.  We do not recommend our readers should become reckless speed
+demons: improvements in running time should be weighed against the
+time required to implement and maintain the code, and for most of us
+it is unwise to get into the business of rewriting our codes every
+year to eke every jot of speed out of the newest processor.  But
+certain details of how we implement our methods can make
+order-of-magnitude differences in how fast our codes run on most
+modern processors, and a little knowledge of those details (along with
+a few tools) can go a long way toward keeping us happy with both the
+performance and the tidiness of our codes.
+
+## Time to what?
+
+The key metric in performance of numerical methods is *usually* the
+wall clock time to a solution.  In addition to wall clock time, one
+might want to understand how much memory, disk space, network
+bandwidth, or power are used in a given computation.  However, all
+these measures may depend on implementation details, on details of the
+problem being solved, and on the system used.
+
+We would certainly like code that we have optimized to run fast on
+problems other than our test problems; and ideally, we would like our
+performance to be portable (or at least "transportable" with small
+changes) to new systems.  To accomplish this, it is useful to have
+both performance *models* that we can use to generalize beyond a
+single instance and performance *experiments* to validate our models
+and to fit any free parameters.  Sometimes we use proxy measures for
+wall clock time, such as the number of arithmetic operations in a
+code, with the suggestion that these proxies relate to wall clock time
+by a simple (usually linear) model.  Such proxy measures should be
+treated with caution unless backed by data.  We discuss this in
+@sec-performance-scaling, @sec-performance-model, and
+@sec-performance-misconceptions.
+
+The notion of "time to solution" has some additional subtleties.  Some
+algorithms run to completion, then return a result more-or-less
+instantaneously at the end.  In many cases, though, a computation will
+produce intermediate results.  In this case, there are usually two
+quantities of interest in characterizing the performance:
+
+-   The time to first result (response time)
+-   Rate at which results are subsequently produced (throughput)
+
+For problems involving information retrieval or communication, we
+usually refer to these as the *latency* and *bandwidth*.  But the idea
+of an initial response time and subsequent throughput rate applies
+more broadly.
+
+When we think about concepts of latency and throughput, we are
+measuring performance not by a single number (time to completion), but
+by a curve of utility versus time.  When we think about a *fixed*
+latency and throughput, we are implicitly defining a piecewise linear
+model of utility versus time: there's an initial period of zero
+utility, followed by a period of linearly increasing utility with
+constant slope (until completion).  The piecewise linear model is
+attractive in its simplicity, but more complex models are sometimes
+useful.  For example, to understand the performance of an iterative
+solver, the right way to measure performance might be in terms of
+approximation error versus time.
+
+We are also often interested in situations where we *incrementally
+recompute* something based on new data.  In this case, we might have
+initial setup costs that need only be run once, and thereafter are not
+required again (or are only required periodically).  In this case,
+there is a tradeoff: the setup costs may be expensive, but what we
+care about is the setup cost *together with* the incremental costs.
+In this case, we say the setup costs are *amortized* over the
+computation.
+
+While it is not our main topic in this chapter, it is also worthwhile
+to pay attention to resources that we care about that fall outside our
+computation.  This might include things like input/output costs --
+reading data in and writing results out can be surprisingly expensive!
+It can also include things like the number of times that we require
+human attention, or the amount of experimental data required to
+adequately fit a model.
+
+## Scaling analysis {#sec-performance-scaling}
+
+For most problem classes, there is some natural measure of the size of
+the problem.  This could be the number of data points we measure, the
+size of a linear system to be solved, etc.  Scaling analysis for
+algorithms has to do with the way the cost changes as the size
+parameter $n$ grows, along with other parameters such as the number of
+processors.
+
+We usually write scaling analyis using order notation (aka "big O" notation), which refers to *sets* of functions with certain growth rates; we say $f(n)$ is
+
+- $O(g(n))$ if $f$ grows no faster than $g$: there is an integer $N$
+  and positive constant $C$ such that for all $n \geq N$, $f(n) \leq C
+  g(n)$.
+- $o(g(n))$ if $f$ grows more slowly than $g$: for any positive $C$,
+  there is an integer $N$ such that for all $n > N$, $f(n) < C g(n)$.
+- $\Omega(g(n))$ if $f$ grows no more slowly than $g$: there is an
+  integer $N$ and positive constant $C$ such that for all $n \geq N$,
+  $f(n) \geq C g(n)$.
+- $\omega(g(n))$ if $f$ grows strictly faster than $g$: for any
+  positive $C$, there is an integer $N$ such that for all $n > N$,
+  $f(n) < C g(n)$.
+- $\Theta(g(n))$ if $f$ and $g$ grow at the same rate: there is an
+  integer $N$ and positive constants $c$ and $C$ such that for all $n
+  \geq N$, $c g(n) \leq f(n) \geq C g(n)$.
+
+Even though order notation defines sets of functions, we usually abuse
+notation and write things like $f(n) = O(g(n))$ rather than the more
+proper $f(n) \in O(g(n))$.  We will see the same notation in a
+different context ($x$ going to zero rather than $n$ going to
+infinity) in @sec-calculus-bg-ch.
+
+As a concrete example, that will recur frequently, let us consider the
+complexity of the *Basic Linear Algebra Subroutines* (BLAS), a
+collection of standard linear algebra operations often used as
+building blocks for higher-level algorithms.  Typical examples are dot
+products, matrix-vector products, and matrix-matrix products.  For the
+case of square matrices, these cost $O(n^1)$, $O(n^2)$, and $O(n^3)$
+time, respectively.  In the language of the BLAS standard, we call
+these level 1, level 2, and level 3 BLAS calls.  However, while this
+captures the correct scaling, it is nowhere near the full story: a
+fast implementation of the standard matrix-matrix
+multiply[^no-strassen] can be orders of magnitude faster than the
+standard three nested loops.
+
+[^no-strassen]: [Strassen's algorithm](https://en.wikipedia.org/wiki/Strassen_algorithm) for
+    matrix-matrix multiplication has better asymptotic complexity than
+    the standard algorithm, at $O(n^{\log_2 7})$ running time.
+    Despite the better asymptotic complexity, Strassen's algorithm is
+    at best an improvement for rather large matrices, and is not used
+    in most BLAS libraries.
+
+Order notation is convenient, and we will use it often.  But it is
+convenient in part because it is crude: if we say the runtime of an
+algorithm is $O(n^3)$, that means there is some $N$ and $C$ such that
+the runtime is bounded by $Cn^3$ for all $n \geq N$ -- but that says
+nothing about the size of $C$ or $N$.  Indeed, we expect the tightest
+version of the constant $C$ to vary depending on details of the
+implementation and the system we use.  As we will see in
+@sec-performance-model, we usually will want a scaling analysis as the
+*start* of understanding performance, but it is not the conclusion.
+
+## Architecture basics {#sec-performance-arch}
+
+In introductory programming classes, students typically form a mental
+model of how an idealized computer works.  There is a memory,
+organized into a linear address space.  A program is stored in memory,
+and consists of machine language instructions for things like register
+read/write, logic, and arithmetic.  The computer reads these
+instructions from memory and executes them in program order.  And, we
+think, all operations take about the same amount of time.
+
+This mental model is incomplete in many respects, though that does not
+keep it from being useful.  The reader who has had an undergraduate
+computer architecture course (e.g. from @patterson-hennesey-6e) will
+already appreciate the impact on performance of the memory hierarchy
+and instruction-level parallelism on performance.  For the reader who
+has not had such a course (or has not reviewed the material recently),
+a brief synopsis may be useful.
+
+### Memory matters
+
+In a crude accounting of the work done by numerical codes, we often
+count the number of floating point operations (flops) required.  On
+modern machines, though, the cost of a floating point operation pales
+in comparison to the cost of an access to main memory.  On one core of
+the laptop on which this text is being written[^perf-m1-pro], more
+than 2500 64-bit floating point operations can (in theory) be
+performed in the latency period for a read request to main memory; and
+the subsequent bandwidth is such that we could execute more than three
+floating point operations per floating point number read from main
+memory.  Though the details of these numbers vary from machine to
+machine, the core message remains the same: if we are not careful, the
+dominant cost of many numerical computations is not arithmetic, but
+data transfers.
+
+[^perf-m1-pro]: These numbers are for a Firestorm core (performance
+    core) on an Apple M1 Pro, taken from a [review on
+    Anandtech](https://www.anandtech.com/show/16226/apple-silicon-m1-a14-deep-dive/2).
+    These cores have four floating point pipelines, each of which can
+    execute operations on 128-bit vectors (two double-precision
+    floating point numbers).  At 3.2 GHz, this corresponds to a
+    processor bandwidth of 25.6 floating point operations (adds or
+    multiplies) per nanosecond.  We estimate the latency to main
+    memory at about 100 ns, so about 2560 floating point operations in
+    the time to get the first byte of a memory transfer from memory.
+    Memory bandwidth to one core seems to be about 60 GB/s, or about
+    7.5 double-precision floating point numbers per nanosecond.
+
+#### Locality
+
+What saves us from being forever limited by main memory is a *memory
+hierarchy* with small memories with fast access (caches) absorbing
+some of the traffic that would otherwise go to larger memories with
+slower access farther away.  This hierarchy is engineered to reduce
+main memory traffic for programs that exhibit two sorts of *locality*:
+
+- *Spatial locality* is the tendency to consecutively access memory
+  locations that are close together in address space.
+
+- *Temporal locality* is the tendency to frequently re-use a (small)
+  "working set" of data in a particular part of a computation.
+
+Some programs are born with data that fits in cache, some achieve good
+cache utilization through "natural" locality, and some have locality
+thrust upon them.  In many cases, performance tuning of numerical
+codes falls into the last category: a naively written code will not
+have good locality and will tend to be limited by memory, but we can
+impvove matters by rearranging the computations for a more
+cache-friendly access pattern.  But to get the best use from caches,
+we need a few more details.
+
+#### Hits, misses, and operational intensity
+
+Processors may have a *register file* containing data that can be
+operated on immediately, two or three levels of *cache* (with L1 the
+fastest and smallest, then L2, and then L3), and a main memory.  When
+a program requests data from a particular address, the processor first
+consults with the lowest level of cache.  If the data is in the cache
+(a *cache hit*), it can be returned otherwise.  In the event of a
+*cache miss*, the processor consults with higher levels of cache to
+try to find the data, eventually going to main memory if necessary.
+
+To exploit *spatial locality*, caches are organized into *lines* of
+several bytes; when data is read into cache, we fetch it a cache line
+at a time, possibly saving ourselves some subsequent cache misses.  To
+exploit *temporal locality*, the processor tries to keep a line in
+cache until the space is needed for something else.  An *eviction
+policy* determines when a cache line will be replaced by other data.
+The eviction policy depends in part on the *associativity* of the
+cache.  In a *direct-mapped* cache, each address can only go in one
+cache location, usually determined by the low-order bits of the
+storage address.  In an $n$-way *set associative* cache, each address
+can go into one of $n$ possible cache locations; in case a line must
+be evicted, the processor will choose something like the least
+recently used of the set (an LRU policy).  Higher levels of
+associativity are more expensive in terms of hardware, and so are
+usually associated with the lowest levels of cache.
+
+Naturally, we would like to minimize the number of cache misses.  To
+design code with few misses, it is useful to think of three distinct
+types of misses[^contention-miss]:
+
+- *Compulsory*: when the data is loaded into cache for the first time.
+- *Capacity*: when the working set is too big and the cache was filled
+  with other things since it was last used.
+- *Conflict*: when there is insufficient associativity for the access
+  pattern.
+
+[^contention-miss]: In shared-memory parallelism, we are also
+    concerned about *coherence* misses when multiple processors
+    write to locations in memory that are close to each other, and
+    thus the local cache lines must be invalidated to ensure that all
+    processors are viewing memory in the same ways.  This is
+    important, but beyond the scope of the current treatment.
+
+For codes with low *operational intensity* (or *arithmetic
+intensity*), compulsory misses are the limiting factor in how well we
+can use the cache.  The operational intensity is defined to be the
+ratio of operations to memory reads.  For example, consider a dot
+product of two vectors (assumed not to be resident in cache): if each
+vector is length $n$, we have $2n$ floating point operations (adds and
+multiplies) on $2n$ floating point numbers for an operational
+intensity of one flop per float.  We can, at best, hope that we are
+accessing the numbers in sequential order so that we only have a cache
+miss every few numbers (depending on the number of floating point
+numbers that fit into a cache line).  Such a routine is inherently
+*memory-bound*, i.e. it is limited not by the time to do arithmetic
+but by the time to retrieve data.
+
+In contrast to dot products, square matrix-matrix products involve
+$2n^3$ floating point operations, but only involve $2n^2$ input
+numbers --- an operational intensity of $n$ operations per float.  In
+this case, we are not so limited by compulsory misses.  However,
+unless the matrices are small enough to fit entirely into cache, a
+naively-written code may still suffer *capacity* misses.  To get
+around this, we might use *blocking* or *tiling*, reorganizing the
+matrix-matrix product in terms of products of smaller submatrices.
+Even with such a reorganization, we might need to be careful about
+*conflict* misses, particularly when $n$ is a multiple of a large
+power of 2 (the worst case scenario for set-associative caches).
+
+### Instruction-level parallelism
+
+If we do not use caches well, our speed will be limited by memory
+traffic.  But once we have reduced memory traffic enough, the rate at
+which we can execute operations becomes the limiting factor; that is,
+we are *compute bound* rather than *memory bound*.  To improve the
+performance of compute-bound codes, we need to understand a little
+more about a little about *instruction-level parallelism*.
+
+A typical processor consists of several *cores*.  Codes that are not
+explicitly parallel run on just one core at a time.  Each core
+presents a serial programming *interface*: the core acts like it
+executes machine instructions in program order.  This interface is
+fine for reasoning about correctness of programs.  But the interface
+hides a much more sophisticated implementation.
+
+In introductory computer architecture classes, we usually start by
+discussing a *five stage pipeline*, where for each instruction we
+
+- *Fetch* the instruction from memory
+- *Decode* the instruction
+- *Execute* the instruction
+- Perform any *memory* operations
+- *Write back* results to the register file
+
+In any given cycle, each pipeline stage can be occupied by a different
+instruction; while we are writing back the first instruction in a
+sequence, we might be performing a memory operation associated with
+the second instruction, doing some arithmetic for the third
+instruction, and decoding and fetching the fourth and fifth
+instruction.  Hence, though each instruction typically has a *latency*
+of five cycles to execute (modulo waiting for memory), the processor
+in principle can execute instructions with a *bandwidth* of one
+instruction per cycle.  We do not always achieve this peak number of
+instructions per cycle, though.  For example, if the second
+instruction depends on the result of the first instruction, then we
+cannot execute the second instruction until the first instruction has
+written its results back to the register file.  This results in a
+"bubble" in the pipeline where some of the stages are idle, and
+reduces the rate at which the processor can execute instructions.
+
+The picture in most machines now is more complicated than a five stage
+pipeline.  Modern processors are often *wide*: the front-end pipeline
+can fetch and decode several operations in a single cycle.  The
+fetch-and-decode itself can be rather complex, with one machine
+language instruction turned into several "micro-ops" internally.  Once
+an instruction is decoded, it is kept in a re-order buffer until the
+processor is ready to dispatch it to a *functional unit* like a
+floating point unit or memory unit.  These functional units
+themselves have internal pipelines, and so can process several
+instructions concurrently.  As the functional units complete their
+work, the results are written back in an order consistent with the
+program order.
+
+A wide, pipelined, out-of-order processor can have many instructions
+in flight at the same time.  The extent to which we can keep the
+processor fully occupied depends on two factors:
+
+- *Limited dependencies*: As with the five-stage pipeline,
+  dependencies between instructions can limit the amount of
+  instruction-level parallelism.  These dependencies can take the form
+  of data dependencies (one operation takes as input the result of a
+  previous operation) or control dependencies (we cannot complete
+  instructions after a branch until the branch condition has been
+  computed).  The out-of-order buffer and branch prediction techniques
+  can help mitigate the impact of dependencies, but we still expect
+  code with simple control structures and lots of independent
+  operations to run faster than code with complicated control and lots
+  of tight data dependencies.
+
+- *Instruction diversity*: A mix of different types of instructions
+  can keep the different functional units occupied concurrently.
+
+In addition to the *implicit* instruction-level parallelism we have
+just described, many modern processors provide *explicit*
+instruction-level parallelism in the form of *vector* or *SIMD*
+(single-instruction multiple-data) instructions that simultaneously 
+compute the same operation (e.g. addition or multiplication) on
+short vectors of inputs.
+
+Given code with simple structure and enough evident independent
+operations, compilers can do a good job at producing code that uses
+vector instructions, just as they do a good job at reordering
+instructions for the processor.
+
+## Performance modeling {#sec-performance-model}
+
+Runtime can depend on many parameters: the problem size and structure,
+the algorithms used in the computation, details of the implementation,
+the number and type of processors used, etc.  Performance models
+predict runtime (and perhaps the use of other resources) as a function
+of these parameters.  There are several reasons to want such a model:
+
+- To decide whether a method is worth the effort of implementing or
+  tuning.
+  
+- To decide what algorithm to use (and what parameter settings) for
+  the best runtime on a particular problem and system.
+
+- To decide whether a particular subcomputation is likely to be a
+  bottleneck in a larger computation.
+
+- To determine whether the runtime of a computation is "reasonable" or
+  if there is room for easy improvement in the implementation.
+
+Scaling analysis (@sec-performance-scaling) does not usually yield a
+good performance model on its own.  Even if we estimate of the number
+of floating point operations in a given computation, we know from
+@sec-performance-arch that there may be several orders of magnitude
+depending in runtime depending how memory is used and the amount of
+instruction-level parallelism.  At the same time, a *somewhat*
+inaccurate model is often fine to guide engineering decisions.
+Because models reflect our understanding, they will almost always be
+incomplete; indeed, the most useful models are *necessarily*
+incomplete, since otherwise they are too cumbersome to reason about!
+
+Experiments reflect what really happens, and are a critical
+counterpoint to models.  The division between performance models and
+experiments is not sharp. In the extreme case, we can use machine
+learning and other empirical function fitting methods can be used to
+estimate runtimes from experimental measurements under weak
+assumptions.  But when strongly empirical models have many parameters,
+a lot of data is needed to fit them well; otherwise, the models may be
+*overfit*, and do a poor job of predicting performance except away
+from the training data. Gathering a lot of data may be appropriate for
+cases where the model is used as the basis for *auto-tuning* a
+commonly-used kernel for a particular machine architecture, for
+example.  But performance experiments often aren't cheap -- or at
+least they aren't cheap in the regime where people most care about
+performance -- and so a simple, theory-grounded model is often
+preferable. There's an art to balancing what should be modeled and
+what should be treated semi-empirically, in performance analysis as in
+the rest of science and engineering.
+
+### Applications, benchmarks, and kernels
+
+The performance of application codes is usually what we really care
+about. But application performance is generally complicated. The main
+computation may involve alternating phases, each complex in its own
+right, in addition to time to load data, initialize any data structures,
+and post-process results. Because there are so many moving parts, its
+also hard to use measurements of the end-to-end performance of a given
+code on a given machine to infer anything about the speed expected of
+other codes. Sometimes it's hard even to tell how the same code will run
+on a different machine!
+
+*Benchmark codes* serve to provide a uniform way to compare the
+performance of different machines on "characteristic" workloads. Usually
+benchmark codes are simplified versions of real applications (or of the
+computationally expensive parts of real applications); examples include
+the [NAS parallel
+benchmarks](https://www.nas.nasa.gov/publications/npb.html), the [Graph
+500](http://www.graph500.org/) benchmarks, and (on a different tack)
+Sandia's [Mantevo](https://mantevo.org/) package of mini-applications.
+
+*Kernels* are frequently-used subroutines such as matrix multiply, FFT,
+breadth-first search, etc. Because they are building blocks for so many
+higher-level codes, we care about kernel performance a lot; and a kernel
+typically involves a (relatively) simple computation. A common first
+project in parallel computing classes is to time and tune a matrix
+multiplication kernel.
+
+Parallel *patterns* (or
+["dwarfs"](www.eecs.berkeley.edu/Pubs/TechRpts/2006/EECS-2006-183.pdf))
+are abstract types of computation (like dense linear algebra or graph
+analysis) that are higher level than kernels and more abstract than
+benchmarks. Unlike a kernel or a benchmark, a pattern is too abstract to
+benchmark. On the other hand, benchmarks can elucidate the performance
+issues that occur on a given machine with a particular type of
+computation.
+
+### Model composition
+
+Counting floating-point operations is generally a bad way to estimate
+performance, because the "cost per flop" is so poorly defined.  But
+the performance of larger building blocks may be much more stable, so
+that call counts (as opposed to operation counts) are a reasonable
+basis for performance modeling.  For example, we frequently describe
+the performance of iterative solvers for sparse systems of linear
+equations in terms of the number of matrix-vector products; and for a
+particular matrix size, the time for a matrix-vector product will
+usually be about constant[^nb-cache-warmup].  If all other operations
+in the solver are cheap compared to the cost of the matrix-vector
+product, just measuring the number of products and separately building
+a model for the time $t_{\mathrm{matvec}}$ for one product (or
+measuring it) may be adequate for predicting performance.
+
+[^nb-cache-warmup]: For small problems, the cost of the first
+    matrix-vector product in a series of such computations may be
+    slower than subsequent products.  This is because the first
+    product might suffer compulsory cache misses, but afterward the
+    cache is "warmed."
+
+If we decide that a particular iterative solver should be faster, we
+might try to make matrix-vector products run faster, perhaps by
+rearranging the data structure that represents the matrix.  This might
+be accomplished with some setup cost $t_{\mathrm{setup}}$ to analyze
+the input matrix and rearrange the data.  If the rearranging the
+multiplication speeds it up by a factor of $S'$, then the cost of the
+original code vs the initial code is
+$$\begin{aligned}
+t_{\mathrm{original}} &= n t_{\mathrm{matvec}} \\
+t_{\mathrm{rearranged}} &= t_{\mathrm{setup}} + n t_{\mathrm{matvec}} / S'
+\end{aligned}$$
+The rearranged computation will be faster if
+$$
+  t_{\mathrm{setup}} < t_{\mathrm{matvec}} n (S'-1)/S'.
+$$
+Even a fairly large setup cost may be worthwhile if it is *amortized*
+over enough iterations.  Even if rearranging the data structure does
+not make sense for a single linear solve, it may make sense to rearrange if
+we are solving many similar systems (in which case we might be able to
+pay the setup cost just once rather than for every solve).
+
+Alternately, we could try to find an alternative method that requires
+fewer matrix-vector products, though this might involve more expensive
+iterations.  This can be a net win even if each iteration is "less
+efficient" in terms of the rate of floating point operations.  It is
+worth remembering that the key measure is not the arithmetic rate, but
+the time to completion (or time to adequate accuracy).  In each case,
+we can reason about the performance with the same general strategy of
+reasoning about the performance of smaller building blocks.
+
+### Modeling with kernels
+
+When we study dense matrix computations @sec-nla-ch, we will write
+many of our algorithms in "block" fashion, so that almost all the work
+is done in level 3 BLAS operations.  Because these have high
+operational intensity, it is possible (though difficult) to write
+these operations to run at pretty close to the peak arithmetic rate,
+at least for a single core.  Fortunately, these operations are so
+common that we can usually rely on someone else to have done the hard
+work of writing a fast implementation in this setting.  Hence, in
+dense matrix computations we often write that something requires a certain
+number of floating point operations that are "mostly level 3 BLAS,"
+and assume that the reader understands that for this problem, the
+number of floating point operations times the peak flop rate (or some
+adjusted version thereof) is a reasonable estimate for the runtime.
+
+More generally, for codes that rely on common well-tuned kernel
+operations like the level 3 BLAS or tuned FFTs, we can sometimes get
+away with assuming that the kernel runs at an appropriate "speed of
+light" for the hardware.
+
+### The Roofline model
+
+If we are going to assume kernels that run at an appropriate "speed of
+light" for hardware, we need to understand what that speed is.  The
+*Roofline model* is a simple model of peak performance for different
+computational kernels (@williams-waterman-patterson-2009).  The model
+consists of a log-log plot of the operational intensity $I$ (in
+floating point operations / byte) vs the operation rate (floating
+point operations per second).  The actual operation rate always sits
+under a "roofline," the minimum of the limit imposed by the peak
+memory bandwidth $\beta$ (operation rate is less than $\beta \times
+I$, a diagonal line on the plot) and the peak operational rate
+attainable by the hardware (a horizontal line on the plot).  More
+elaborate versions of the roofline plot can include additional
+performance ceilings (e.g. the ceiling without the use of vector
+instructions, or without the use of multiple cores) and bandwidth
+ceilings (e.g. associated with multiple levels of cache).
+
+### Amdahl's law
+
+We measure improvements to performance of a code on a fixed problem
+size by the *speedup*:
+$$
+  S = \frac{T_{\mathrm{baseline}}}{T_{\mathrm{improved}}}.
+$$
+Suppose we have a code involving two types of work: some fraction
+$\alpha$ is work that we do not know how to speed up, and the
+remaining fraction $(1-\alpha)$ we think we can improve.
+Let $S'$ be the speedup for the part that we know how to improve; then
+$$
+\begin{aligned}
+  S &= 
+  \frac{T_{\mathrm{baseline}}}
+       {\alpha T_{\mathrm{baseline}} + 
+       (1-\alpha) T_{\mathrm{baseline}}/S'} \\
+  &=   \frac{1}{\alpha + (1-\alpha)/S'} \\ 
+  &=   \frac{S'}{1 + \alpha (S'-1)}
+\end{aligned}
+$$
+No matter how big the speedup $S'$ for the part we know how to
+improve, the overall speedup is bounded by $1/\alpha$.
+This observation is known as *Amdahl's law*.
+
+Amdahl's law is best known in the context of parallel computing, where
+we are interested in speedup for a fixed problem size as a function of
+the number of processors $p$:
+$$
+  S(p) = \frac{T_{\mathrm{serial}}}{T_{\mathrm{parallel}}(p)}.
+$$
+Studying the speedup $S(p)$ in this setting (or the parallel
+efficiency $S(p)/p$) is known as a *strong scaling* study.
+In this setting, $\alpha$ is the fraction of serial work.  If the rest
+of the computation can be perfectly sped up (i.e. $S' = p$), then
+$$
+  S(p) = \frac{p}{1+\alpha (p-1)} \leq \frac{1}{\alpha}.
+$$
+In practice, this is usually a generous estimate:
+some overheads usually grow with the number of processors, so that
+past a certain number of processors the speedup often doesn't just
+level off, but actually *decreases*.
+
+### Gustafson's law
+
+Amdahl's law is an appropriate modeling tool when we are trying to
+improve the runtime to solve problems of a fixed size, whether by
+parallel computing or by tuning code.  Sometimes, though, we want to
+improve runtime because we want to solve bigger problems!
+This leads to a different scaling relationship.
+
+In *weak scaling* studies in parallel computing, we usually consider
+the *scaled speedup*
+$$
+S(p) = \frac{T_{\mathrm{serial}}(n(p))}
+            {T_{\mathrm{parallel}}(n(p),p)}
+$$ 
+where $n(p)$ is a family of problem sizes chosen so that the work per
+processor remains constant.  For weak scaling studies, the analog of
+Amdahl's law is *Gustafson's law*; if $a$ is the amount of serial work
+and $b$ is the parallelizable work, then
+$$
+S(p) \leq \frac{a + bP}{a + b} = p-\alpha(p-1)
+$$
+where $\alpha = a/(a+b)$ is the fraction of serial work.
+
+## Performance principles {#sec-performance-principles}
+
+> There is no doubt that the grail of efficiency leads to abuse.
+> Programmers waste enormous amounts of time thinking about, or
+> worrying about, the seed of noncritical parts of their programs, and
+> these attempts at efficiency actually have a strong negative impact
+> when debugging and maintenance are considered.  We *should* forget
+> about small efficiencies, say 97% of the time: premature
+> optimization is the root of all evil.
+>
+> Yet, we should not pass up our opportunities in that critical 3%.  A
+> good programmer will not be lulled into complacency by such
+> reasoning, he will be wise to look carefully at the critical code;
+> but only *after* that code has been identified.  It is often a
+> mistake to make a priori judgements about what parts of a program
+> are really critical, since the universal experience of programmers
+> who have been using measurement tools has been that their intuitive
+> guesses fail. ...
+>
+> -- Donald Knuth (from @knuth-1974)[^knuth-awesome]
+
+We want our codes to run fast, but not at great cost in terms of
+maintainability or development time.  To do this, it is useful to keep
+some principles in mind.
+
+[^knuth-awesome]: The quote about "premature optimization" in
+    @knuth-1974 is probably the best known quote from this paper, but
+    the rest of the paper is worth reading as well.
+
+### Think before you write
+
+Back-of-the-envelope performance models are often[^perf-not-always]
+enough to give us a sense of the "big computations," parts of a code
+will be critical to performance.  We might also have a sense in
+advance of what the natural algorithmic variants are for this code
+are.  If we think a particular routine might be a performance
+bottleneck that we will want to play with, it is probably worth
+thinking about how to code that routine so it is easy to experiment
+with it (or replace it).
+
+When thinking about performance, it is worthwhile remembering to
+explicitly account for I/O.  Memory accesses may move at a snail's
+pace compared to arithmetic; but I/O is positively glacial compared to
+either.
+
+[^perf-not-always]: This assumes that our back-of-the-envelope performance
+    models are at least somewhat correct.
+
+Before writing any code, it is also useful to
+
+- Think through the implications of algorithms and data structures.
+  Sometimes it is possible to just make a code do much less work
+  without too much efort by using the right standard tools.
+
+- Think about data layouts, if only to make sure that the code does
+  not become too wedded to a specific data layout in memory.
+
+- Decide if an approximation is good enough.
+
+### Time before you tune
+
+When codes are slow, it is often because a large amount of time is
+spent in a few key *bottlenecks*.  In this case, our goal is to find
+and fix those bottleneck computations[^deslugging].
+
+[^deslugging]: Some wag once called this process "deslugging."
+
+For removing bottlenecks -- or even for deciding that a code needs to
+be tuned in the first place -- we need to pay attention to some
+practical points about the design of timing experiments:
+
+- For codes that show any data-dependent performance, it is important
+  to profile on something realistic, as the time breakdown will depend
+  on the use case.
+
+- We also need to be aware that wall-clock time is not the only type
+  of time we can measure -- for example, many systems have some
+  facility to monitor "CPU time," in which only the time that a task
+  is using the processor is counted.  Wall-clock time is typically
+  what we care about.
+
+- The system wall-clock time resolution is often much coarser than the
+  CPU cycle time.  Consequently, we need to make sure that enough work
+  is done in a timing experiment or we might not get good data.  A
+  typical approach to this is to put code to be timed into a loop.
+
+- The same routine run repeatedly may run faster after a first
+  iteration that warms up the cache.
+  
+- There will probably be other processes running on the system, and
+  cross-interference with other tasks can affect timing.
+
+*Profiling* involves running a code and measuring how much time (and
+resources) are used in different parts of the code.  One can
+profile with different levels of detail. The simplest case often
+involves manually instrumenting a code with timers. There are also tools
+that *automatically instrument* either the source code or binary objects
+to record timing information. *Sampling profilers* work differently;
+they use system facilities to interrupt the program execution
+periodically and measure where the code is. It is also possible to use
+*hardware counters* to estimate the number of performance-relevant
+events (such as cache misses or flops) that have occurred in a given
+period of time. We will discuss these tools in more detail as we get
+into the class (and we'll use some of them on our codes).
+
+As with everything else, there are tradeoffs in running a profiler:
+methods that provide fine-grained information can produce a *lot* of
+data, enough that storing and processing profiling data can itself be a
+challenge. There is also an issue that very fine-grained measurement can
+interfere with the software being measured. It is often helpful to start
+with a relatively crude, lightweight profiling technology in order to
+first find what's interesting, then focus on the interesting bits for
+more detailed experimentation.
+
+### Shoulders of giants
+
+A good computational kernel is a general building block with a simple
+interface that does a fair amount of work.  We want kernels to be
+general in order to amortize the work of tuning.  We also ideally like
+kernels with high operational intensity, though not all kernels will
+have this property.
+
+We have already discussed the BLAS as an example of kernel design, and
+noted that the high arithmetic intensity of level 3 BLAS
+(e.g. matrix-matrix multiplication) makes it a particularly useful
+building block for high-performance code.  Other common kernel
+operations include
+
+- Applying a sparse matrix to a vector (or powers of a sparse matrix)
+- Computing a discrete Fourier transform
+- Sorting a list
+
+Code written using common kernel interfaces is *transportable*: the
+implementation will differ from plarform to platform depending on
+architectural details, but the common interface means that code that
+uses the different kernel implementations will run the same way.
+It is critical to get properly tuned implementations of these kernels
+--- for example, linear algebra codes run with the reference BLAS
+library invariably have disappointing performance.
+
+There are some cases when we want to be careful with general-purpose
+kernels.  For example, for some types of structured matrices, the
+general matrix-matrix multiply routines from the BLAS may have higher
+operational complexity than a specialized implementation.  Whether
+"higher operational complexity" means "more run time" depends on the
+size of the problem and the arithmetic rate that a specialized
+implementation attains --- it is sometimes worthwhile to write the
+more specialized code, but not always!  As another example, in some
+situations (like finite element codes or computer graphics), we may
+want to do many operations with small matrices (e.g. 3-by-3 or
+4-by-4), and the BLAS calls may not be as efficient for such small
+$n$.
+
+### Help tools help you
+
+Compilers, including the Julia compiler, are often quite effective at
+local optimizations, particularly those restricted to a "basic block"
+(straight-line code with no conditionals or loops).  Loop
+optimizations are somewhat harder, and global optimizations that cross
+function boundaries are much harder.  In practice, this means that
+very local optimizations are usually only effective when the
+programmer has information that the compiler might not have, but
+humans can help the compiler much more with figuring out global
+optimizations.
+
+To take some concrete examples: compilers are better than humans at
+register allocation and instruction scheduling, and usually at branch
+joins and jump elimination.  Indeed, at this level it is hard for
+humans to even attempt to interfere with what the compiler is doing!
+For operations like constant folding and propagation or the
+elimination of common subexpressions, the compiler might do a good job
+*if* it can figure out that there are no side effects (like I/O or
+changing the contents of an array) -- but the compiler might not
+easily be able to establish that there are no side effects without
+some help[^pure-note].  Compilers are often good at simple loop
+transformations involving loop invariant code motion, unrolling, and
+vectorization.  But compilers are also usually conservative about
+using algebraic identities to transform code[^fp-transform-warning],
+for example.
+
+Apart from using tools for writing our code in performance-friendly
+Julia (as discussed in @sec-performance-julia), we can help the
+compiler in two ways.  First, we recognize that the compiler mostly
+looks at a little bit of the code at a time, and does not know the
+higher-level semantics of that code.  Complex algebraic
+transformations are usually up to the programmer.  Second, the
+compiler is really good at dealing with simple code without too many
+dependencies.  In particular, we want to avoid very complex loops or
+conditional statements, as well as tricky use of functional
+programming constructs in performance-sensitive inner loops.
+
+[^pure-note]: A function that always runs the same way with no side
+    effects is called a *pure* function.  Though Julia has some
+    support for functional programming, unlike some languages, it does
+    not assume functions are pure by default.  There is a `@pure`
+    macro in Julia for declaring functions are pure, but it is easily
+    abused (enough so that the Julia developers have declared that it
+    should only be used in the `Base` packages).
+
+[^fp-transform-warning]: We *want* compilers to be conservative about
+    applying some types of algebraic transformations to floating point
+    code, for reasons we will discuss in @sec-floating-point-ch.
+
+### Tune data structures
+
+As we have seen, memory access and communication patterns are critical
+to performance.  The system is designed to make it fast to process
+small amounts of data that fit in cache, ideally by going through it
+in memory order (a "unit-stride" access pattern).  But this is not the
+most natural access pattern for all the codes we might want to write!
+Consequently, tuning often involves looking not at *code* but at the
+*data* that the code manipulate: rearranging arrays for unit stride,
+simplifying structures with many levels of indirection,using single
+precision for high-volume floating point data, etc.  With a proper
+interface abstraction, the fastest way to high performance often
+involves replacing a low-performance data structure with an equivalent
+high-performance structure.
+
+While we are mainly concerned with accessing data structures (reads
+and writes), access is not the only cost.  Allocation and deallocation
+also cost something, as does garbage collection.  It is easy to end up
+paying hidden allocation costs (often followed by hidden copying
+costs).  Fortunately, Julia provides us with diagnostics to identify
+memory allocations; and with some care, we can write code to
+pre-allocate key data structures.
+
+Matrices are a key data structure in many numerical codes.  In Julia,
+as in MATLAB and Fortran, matrices are stored in a column-major
+format, with each column layed out consecutively in memory.
+Consequently, we usually prefer to process data column-by-column 
+(rather than row-by-row).  For example, the code
+```{.julia}
+for j = 1:n
+    for i = 1:m
+        y[i] += A[i,j]*x[j]
+    end
+end
+```
+will run significantly faster than
+```{.julia}
+for i = 1:m
+    for j = 1:n
+        y[i] += A[i,j]*x[j]
+    end
+end
+```
+
+As another example, consider the layout of many instances of a
+particular structure type.  We could organize this as an array of
+structures, which is good for locality of access to the data for one
+item; or we could organize a structure of arrays, which may be more
+friendly to vectorization.  Particularly for read-only access
+patterns, we might also consider a *copy optimization* where we keep
+around both data structures[^violates-dry], and use whichever data
+structure gives us the best performance in context.
+
+[^violates-dry]: Keeping multiple data structures representing the
+    same data is sometimes good for performance, but violates the
+    "don't repeat yourself" advice from @sec-julia-ch.
+
+## Performance in Julia {#sec-performance-julia}
+
+So far, we have focused on general performance issues that are mostly
+relevant across languages.  However, there are some things that are
+more specific to Julia.
+
+### Measurement tools
+
+We repeat the advice of @sec-performance-principles: you should
+measure your code before tuning it!  Fortunately, Julia provides
+several macros that measure runtime and memory allocation:
+
+- `@time` prints out runtime and allocation information
+- `@timev` prints out a more verbose version of the timing and
+  allocation information
+- `@elapse` prints just the runtime
+- `@timed` returns a structure that includes run time, memory
+  allocation, and information about garbage collection
+- `@elapsed` returns the elapsed time
+- `@allocated` returns the total number of bytes allocated by the expression
+- `@allocations` returns the numbre of allocations in the expression
+
+For more elaborate timing with tabular outputs, we can use the
+[`TimerOutputs.jl`](https://github.com/KristofferC/TimerOutputs.jl)
+package.
+The `@time` macros and even the more elaborate `TimerOutputs.jl`
+package time a single run of a function.  The
+[`BenchmarkTools.jl`](https://github.com/JuliaCI/BenchmarkTools.jl)
+package runs a code multiple times in order to get more accurate
+timing information.
+
+The Julia
+[`Profile`](https://docs.julialang.org/en/v1/manual/profile/) package
+implements a statistical profiler.  Statistics are gathered by running
+an expression with the `@profile` macro.  There are several different
+visualization interfaces that can be used to view the profiling
+results, including a particularly nice visualizer built into VS Code.
+
+### Avoiding boxing
+
+In dynamically-typed languages, the types of values are often only
+known at runtime.  Hence, the system keeps "boxes" that contain both
+type information and the value.  The coding for this pair varies from
+system to system[^boxing-impl], but the practice of boxing in general
+can cause problems with performance.  The run-time system has to
+switch between different operations depending on the type, which
+introduces branches in the code for many operations and makes it
+effectively impossible for the compiler to do code transformations
+like vectorization.  Boxed values also generally take more storage
+than unboxed values would.
+
+[^boxing-impl]: A common representation of boxed values is via a
+    tagged union: a structure with an tag (usually stored as an int)
+    and then a union whose bits can be interpreted as an integer,
+    floating point number, pointer to a more complex object, etc.
+    Some language implementations use more elaborate compact
+    representations to pack both data and type information into a
+    64-bit word (e.g. by using NaN encodings in floating point to
+    signal non-floating-point types, or using the low-order bits of
+    aligned pointers as a type tag).
+
+Though Julia is a dynamically-typed language, it can often produce
+low-level code that avoids boxing.  To do this, Julia uses a
+just-in-time (JIT) compiler that instantiates specialized versions of
+methods depending on the concrete type signature of the
+inputs[^jit-in-fn].  The just-in-time compilation process is necessary
+in part because it would be ridiculously expensive to produce
+specialized implementations of generic methods for every possible
+compatible type; however, most functions are only invoked with a small
+number of type signatures in any given program, so most conceivable
+implementations never need to be generated in practice.  For a *type
+stable* method, the system can determine the concrete type of the
+return value from the concrete input type signature.  Ideally, we
+would like type stability not just for the return value, but for other
+intermediate values and variables as well.  If the JIT compiler can
+reliably determine the concrete types of quantities, it can work with
+that data directly without boxes.
+
+[^jit-in-fn]: The JIT compiler operates on functions.  The system does
+    not compile script-style code, or code entered at the REPL that is
+    not inside a function.  If you want performance, put it in a function!
+
+The
+[`@code_warntype`](https://docs.julialang.org/en/v1/stdlib/InteractiveUtils/#InteractiveUtils.@code_warntype)
+macro in Julia does type inference for a particular method call and
+colors in red any expressions that represent a performance hazard
+because the type system can only determine an abstract type.
+In situations where it is convenient to allow abstract types on input
+but performance still matters, the [Julia performance
+tips](https://docs.julialang.org/en/v1/manual/performance-tips/)
+recommends putting the inner part of the function into its own
+separate kernel function that is type stable (the "function barrier
+technique").
+
+Several other performance issues in Julia are associated with the
+potential need for boxing when a concrete type cannot be inferred.
+For example, the Julia manual recommends avoiding untyped globals,
+because there is possibility that they might be assigned to different
+types, so they might be boxed; this also poses is a hazard to the type
+stability of any method that uses them.  We should also avoid
+containers of abstract types, since the items in the container then
+have to be boxed; and, for the same reason, we should be careful with
+structures with abstract types for fields.  Finally, while Julia's
+functional programming features are convenient, when creating a
+closure it is easy to run into unanticipated boxing of captured
+variables from the surrounding environment.
+
+### Temporary issues
+
+Vector operations in Julia (addition and scalar multiplication)
+produce temporaries.  For example, if `x` and `y` are vector
+variables, then the function
+```{.julia}
+f1(x,y) = x.^2 + 2x.*y + y.^2
+```
+will generate temporaries for `x.^2`, `2x`, `2x.*y`, and `y.^2` (as
+well as storage for the final result).  If we use dotted operations
+throughout, then Julia fuses the operations and does not produce
+temporaries:
+```{.julia}
+f2(x,y) = x.^2 .+ 2.0 .* x .* y .+ y.^2
+```
+An equivalent, but less verbose, option is to use the `@.` macro to
+make a fused broadcast version of the whole expression:
+```{.julia}
+f3(x,y) = @. x^2 + 2x*y + y^2
+```
+We could also use a broadcast call to a helper function, which again
+will avoid allocating temporaries:
+```{.julia}
+f4scalar(x, y) = x^2 + 2x*y + y^2
+f4(x, y) = f4scalar.(x, y)
+```
+On the machine on which this is being written, the function `f1` takes
+about five times the memory and six times the run time of any of the
+other versions for input vectors `x` and `y` of length a million.
+
+If we pre-allocate storage for the result, we do not need *any*
+allocations:
+```{.julia}
+function f5!(result, x, y)
+    @. result = x^2 + 2x*y + y^2
+end
+```
+
+When `x` and `y` are long vectors, there is negligible runtime
+performance difference between writing to a pre-allocated vector and
+producing a newly-allocated output vector.  If the vectors are short,
+though, we may start to notice the cost of allocating (and garbage
+collecting) these temporaries, particularly if the code has a large
+working set and more vectors leads to more cache pressure.  On the
+other hand, if the input vectors are short *and* their sizes are known
+at compile time, we may also want to consider declaring them to be
+static arrays (using the [`StaticArrays.jl`
+package](https://github.com/JuliaArrays/StaticArrays.jl)).
+
+Another place where Julia allocates new storage is in slicing
+operations used to specify a subarray.  This happens even if the
+"slice" is the whole array.  For example, if `x` is a vector in
+Julia, writing
+```{.julia}
+z = x
+```
+assigns the name `z` to the same vector object, while writing
+```{.julia}
+z = x[:]
+```
+creates a new copy of `x`.  If we want to refer to the entries of a
+subarray without creating a copy, we can create a "view" object (a
+`SubArray`) by either calling the `view` function or using the
+`@views` macro:
+```{.julia}
+z1 = x[1:10]        # Copy of the start of x
+z2 = view(x, 1:10)  # View of the start of x
+@views z2 = x[1:10] # View of the start of x
+z1[1] = 100         # Does not alter x, only z1
+z2[1] = 100         # Now x[1] == 100
+```
+
+In general, many of the linear algebra functions in Julia provide a
+mutating version that writes results into user-provided storage.  This
+includes factorization routines (e.g. `cholesky!`), solves (with
+`ldiv!`), and matrix-vector or matrix-matrix products (with `mul!`).
+But using these mutating operations is more error-prone, and we do not
+recommend it until a timing experiment or a performance model suggests
+that allocating new storage might cause a problem.
+
+### Performance annotations
+
+Julia provides several macros to tell the compiler to try certain
+types of transformations.  For example,
+
+- `@inbounds`: tells the compiler that there is no need to check that
+  array accesses are in bounds
+- `@fastmath`: tells the compiler that it is OK to apply certain
+  floating point transformations that are not equivalent to the
+  original code (e.g. by allowing the compiler to pretend floating
+  point addition and multiplication are associative)
+- `@simd`: tells the compiler to try vectorizing the code through SIMD
+  instructions.  `@simd ivdep` promises that loop iterations are
+  independent and references are free from aliasing.
+
+There are a number of packages that provide additional transformations
+(e.g. `@turbo` from
+[`LoopVectorization.jl`](https://github.com/JuliaSIMD/LoopVectorization.jl).
+
+We do not recommend using performance annotation macros until and
+unless a timing experiment or performance model suggests that it
+addresses a bottleneck.  These macros 
+effectively prompting the compiler to do certain transformations it 
+might not otherwise do.  If the compiler can deduce that these
+transformations are equivalent to the original code and will result in
+a performance improvement, the macros will often be unnecessary.
+If the compiler cannot deduce that these transformations are
+equivalent to the original code, but you as the human author think
+that they are obviously equivalent, you may want to double-check your
+assumptions of what is "obvious" before proceeding.
+
+## Misconceptions and deceptions {#sec-performance-misconceptions}
+
+> It ain't ignorance causes so much trouble; it's folks knowing so much
+> that ain't so.\
+> -- [Josh
+> Billings](http://www.famous-quotes.com/author.php?page=3&total=81&aid=733)
+
+One of the common findings in pedagogy research is that an important
+part of learning an area is overcoming common *misconceptions* about
+the area; see, e.g. @leonard-kalinowski-andrews-2014,
+@sadler-et-al-2013, @muller-2008.  And there are certainly some common
+misconceptions about high performance computing! Some misconceptions
+are exacerbated by bad reporting, which leads to deceptions and
+delusions about performance.
+
+### Incorrect mental models
+
+#### Algorithm = implementation
+
+We can never time algorithms. We only time implementations, and
+implementations vary in their performance. In some cases,
+implementations may vary by orders of magnitude in their performance!
+
+#### Asymptotic cost is always what matters
+
+We can't time algorithms, but we can reason about their asymptotic
+complexity. When it comes to scaling for large $n$, the asymptotic
+complexity can matter a lot. But comparing the asymptotic complexity of
+two algorithms for modest $n$ often doesn't make sense! QuickSort may
+not always be the fastest algorithm for sorting a list with ten
+elements...
+
+#### Simple serial execution
+
+Hardware designers go to great length to present us with the *interface*
+that modern processor cores execute a instructions sequentially. But
+this *interface* is not the actual *implementation*. Behind the scenes,
+a simple stream of x86 instructions may be chopped up into
+micro-instructions, scheduled onto different functional units acting in
+parallel, and executed out of order. The *effective behavior* is
+supposed to be consistent with sequential execution -- at least, that's
+what happens on one core -- but that illusion of sequential execution
+does not extend to performance.
+
+#### Flops are all that count
+
+Data transfers from memory to the processor are often more expensive
+than the computations that are run on that data.
+
+#### Flop rates are what matter
+
+What matters is time to solution. Often, the algorithms that get the
+best flop rates are not the most asymptotically efficient methods; as a
+consequence, a code that uses the hardware less efficiently (in terms of
+flop rate) may still give the quickest time to solution.
+
+#### All speedup is linear
+
+See the comments above about Amdahl's law and Gustafson's law. We rarely
+achieve linear speedup outside the world of embarrassingly parallel
+applications.
+
+#### All applications are equivalent
+
+Performance depends on the nature of the computation, the nature of the
+implementation, and the nature of the hardware. Extrapolating
+performance from one computational style, implementation, or hardware
+platform to another is something that must be done very carefully.
+
+### Deceptions and self-deceptions
+
+The article "Twelve Ways to Fool the Masses When Giving Performance
+Results on Parallel Computers" (@bailey-1991) is a classic in
+performance analysis.
+It's still worth reading (as are various follow-up pieces -- see the
+Further Reading section), and highlights issues that we still see
+now. To summarize slightly, here's my version of the list of common
+performance deceptions:
+
+#### Unfair comparisons and strawmen
+
+A common sin in scaling studies is to compare the performance of a
+parallel code on $p$ processors against the performance of the *same
+code* with $p = 1$. This ignores the fact that the parallel code may
+have irrelevant overheads, or (worse) that there may be a better
+organization for a single processor. Consequently, the speedups no
+longer reflect the reasonable expectation of the reader that this is the
+type of performance improvement they might see when going to a good
+parallel implementation from a *good* serial implementation. Of course,
+it's also possible to see great speedups by comparing a bad serial
+implementation to a correspondingly bad *parallel* implementation: a lot
+of unnecessary work can hide overheads.
+
+A similar issue arises when computing with accelerators. Enthusiasts of
+GPU-accelerated codes often claim order of magnitude (or greater)
+performance improvements over using a CPU alone. Often, this comes from
+explicitly tuning the GPU code and not the CPU code (see, e.g.,
+@vuduc-et-al-2010).
+
+#### Using the wrong measures
+
+If what you care about is time to solution, you might not really care so
+much about watts per GFlop (though you certainly do if you're
+responsible for supplying power for an HPC installation). More subtlely,
+you don't necessarily care about scaled speedup if the natural problem
+size is fixed (e.g. in some graph processing applications).
+
+#### Deceptive plotting
+
+There are so many ways this can happen:
+
+-   Use of a log scale when one ought to have a linear scale, and
+    vice-versa;
+
+-   Choosing an inappropriately small range to exaggerate performance
+    differences between near-equivalent options;
+
+-   Not marking data points clearly, so that there is no visual
+    difference between data falling on a straight line because it
+    closely follows a trend and data falling on a straight line because
+    there are two points.
+
+-   Hiding poor scalability by plotting absolute time vs numbers of
+    processors so that nobody can easily see that the time for 100
+    processors (a small bar relative to the single-processor time) is
+    equivalent to the time for 200 processors.
+
+-   And more!
+
+Plots allow readers to absorb trends very quickly, but it also makes it
+easy to give wrong impressions.
+
+#### Too much faith in models
+
+Any model has limits of validity, and extrapolating outside those limits
+leads to nonsense. Treat with due skepticism claims that -- according to
+some model -- a code will run an order of magnitude faster in an
+environment where it has not yet been run.
+
+#### Undisclosed tweaks
+
+There are many ways to improve performance. Sometimes, better hardware
+does it; sometimes, better tuned code; sometimes, algorithmic
+improvements. Claiming that a jump in performance comes from a new
+algorithm without acknowledging differences in the level of tuning
+effort, or acknowledging non-algorithmic changes (e.g. moving from
+double precision to single precision) is deceptive, but sadly common.
+Hiding tweaks in the fine print in the hopes that the reader is skimming
+doesn't make this any less deceptive!
+
+### Rules for presenting performance results
+
+In the introduction to @bailey-2010, David Bailey suggests nine
+guidelines for presenting performance results without misleading the
+reader. Paraphrasing only slightly, these are:
+
+1.  Follow rules on benchmarks
+
+2.  Only present actual performance, not extrapolations
+
+3.  Compare based on comparable levels of tuning
+
+4.  Compare wall clock times (not flop rates)
+
+5.  Compute performance rates from consistent operation counts based on
+    the best serial codes.
+
+6.  Speedup should compare to best serial version. Scaled speedup plots
+    should be clearly labeled and explained.
+
+7.  Fully disclose information affecting performance: 32/64 bit, use of
+    assembly, timing of a subsystem rather than the full system, etc.
+
+8.  Don't deceive skimmers. Take care not to make graphics, figures, and
+    abstracts misleading, even in isolation.
+
+9.  Report enough information to allow others to reproduce the results.
+    If possible, this should include
+
+    -   The hardware, software and system environment
+    -   The language, algorithms, data types, and coding techniques used
+    -   The nature and extent of tuning
+    -   The basis for timings, flop counts, and speedup computations

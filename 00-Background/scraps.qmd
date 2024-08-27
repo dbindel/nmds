@@ -1,0 +1,143 @@
+Decomposition into subspaces
+Nested subspaces
+Orthogonal complements
+Subspace angles
+Kolmogorov n-width
+
+
+A common theme in understanding 
+
+The sum of two subspaces $\calU_1, \calU_2 \subset \calV$ is
+$$
+  \calU_1 + \calU_2 = \{ u_1 + u_2 : u_1 \in \calU_1, u_2 \in \calU_2 \}.
+$$
+We say the sum is a *direct* sum (denoted $\calU_1 \oplus \calU_2$ if
+each vector in the sum is a *unique* sum of $u_1 \in \calU_1$ and $u_2
+\in \calU_2$.
+
+...
+
+
+- Continuity and $C^k$
+- Lipschitz continuity
+
+- Asymptotic notation, gauge functions, etc
+- Chain rule and composition of linear functions
+- Implicit function theorem and implicit differentiation
+- A nest of notations
+- Dual numbers
+- Differentiation of matrix-valued functions, matrix differential calculus
+- Variational notation, first and second derivatives, Taylor expansions
+- Stationarity, Euler-Lagrange equations and calculus of variations
+
+- Sequences and convergence (+ analysis of sequences that do not converge!)
+- Compactness
+- Fixed point theorems
+
+- Taylor and other series (asymptotic and convergent)
+- Geometric series and Neumann series
+
+- Optimization and stationarity, gradients and subgradients
+- Constraints, Lagrange multipliers, KKT equations
+- Interpretation of Lagrange multipliers
+
+- Integration vs general measures - point out connection to probability (next)
+- Jensen's and other standard inequalities
+- Mapped integration / change of variables
+
+- Complex variables, poles and residues
+- Functional calculus and matrix functions
+
+- How does this help with data science?  Calculus "vs" data science
+
+#### Taylor approximation in 1D
+
+If $f : \bbR \rightarrow \bbR$ has $k$ continuous derivatives, then
+Taylor's theorem with remainder is
+$$f(x+z) = f(x) + f'(x) z + \ldots + \frac{1}{(k-1)!} f^{(k-1)}(x) +
+           \frac{1}{k!} f^{(k)}(x+\xi)$$ where $\xi \in [x, x+z]$. We
+usually work with simple linear approximations, i.e.
+$$f(x+z) = f(x) + f'(x) z + O(z^2),$$ though sometimes we will work with
+the quadratic approximation
+$$f(x+z) = f(x) + f'(x) z + \frac{1}{2} f''(x) z^2 + O(z^3).$$ In both
+of these, when say the error term $e(z)$ is $O(g(z))$, we mean that for
+small enough $z$, there is some constant $C$ such that
+$$|e(z)| \leq C g(z).$$ We don't need to remember a library of Taylor
+expansions, but it is useful to remember that for $|\alpha| < 1$, we
+have the geometric series
+$$\sum_{j=0}^\infty \alpha^j = (1-\alpha)^{-1}.$$
+
+#### Taylor expansion in multiple dimensions
+
+In more than one space dimension, the basic picture of Taylor's theorem
+remains the same. If $f : \bbR^n \rightarrow \bbR^m$, then
+$$f(x+z) = f(x) + f'(x) z + O(\|z\|^2)$$ where
+$f'(x) \in \bbR^{m \times n}$ is the *Jacobian matrix* at $x$. If
+$\phi : \bbR^n \rightarrow \bbR$, then
+$$\phi(x+z) = \phi(z) + \phi'(x) z + \frac{1}{2} z^T \phi''(z) z + O(\|z\|^3).$$
+The row vector $\phi'(x) \in \bbR^{1 \times n}$ is the derivative of
+$\phi$, but we often work with the *gradient* $\nabla \phi(x) =
+\phi'(x)^T$. The *Hessian* matrix $\phi''(z)$ is the matrix of second
+partial derivatives of $\phi$. Going beyond second order expansion of
+$\phi$ (or going beyond a first order expansion of $f$) requires that we
+go beyond matrices and vectors to work with tensors involving more than
+two indices. For this class, we're not going there.
+
+#### Variational notation
+
+A *directional derivative* of a function $f : \bbR^n \rightarrow
+\bbR^m$ in the direction $u$ is
+$$\frac{\partial f}{\partial u}(x) \equiv
+  \left. \frac{d}{ds} \right|_{s=0} f(x+su) = f'(x) u.$$ A nice
+notational convention, sometimes called *variational* notation (as in
+"calculus of variations") is to write $$\delta f = f'(x) \delta u,$$
+where $\delta$ should be interpreted as "first order change in." In
+introductory calculus classes, this sometimes is called a total
+derivative or total differential, though there one usually uses $d$
+rather than $\delta$. There is a good reason for using $\delta$ in the
+calculus of variations, though, so that's typically what I do.
+
+Variational notation can tremendously simplify the calculus book-keeping
+for dealing with multivariate functions. For example, consider the
+problem of differentiating $A^{-1}$ with respect to every element of
+$A$. I would compute this by thinking of the relation between a
+first-order change to $A^{-1}$ (written $\delta [A^{-1}]$) and a
+corresponding first-order change to $A$ (written $\delta A$). Using the
+product rule and differentiating the relation $I = A^{-1} A$, we have
+$$0 = \delta [A^{-1} A] = \delta [A^{-1}] A + A^{-1} \delta A.$$
+Rearranging a bit gives $$\delta [A^{-1}] = -A^{-1} [\delta A] A^{-1}.$$
+One *can* do this computation element by element, but it's harder to do
+it without the computation becoming horrible.
+
+#### Matrix calculus rules
+
+There are some basic calculus rules for expressions involving matrices
+and vectors that are easiest to just remember. These are naturally
+analogous to the rules in 1D. If $f$ and $g$ are differentiable maps
+whose composition makes sense, the multivariate chain rule says
+$$\delta [f(g(x))] = f'(g(x)) \delta g, \quad
+  \delta g = g'(x) \delta x$$ If $A$ and $B$ are matrix-valued
+functions, we also have $$\begin{aligned}
+  \delta [A+B] &= \delta A + \delta B \\
+  \delta [AB] &= [\delta A] B + A [\delta B], \\
+  \delta [A^{-1} B] &= -A^{-1} [\delta A] A^{-1} B + A^{-1} \delta B
+\end{aligned}$$ and so forth. The big picture is that the rules of
+calculus work as well for matrix-valued functions as for scalar-valued
+functions, and the main changes account for the fact that matrix
+multiplication does not commute. You should be able to convince yourself
+of the correctness of any of these rules using the
+component-by-component reasoning that you most likely learned in an
+introductory calculus class, but using variational notation (and the
+ideas of linear algebra) simplifies life immensely.
+
+A few other derivatives are worth having at your fingertips (in each of
+the following formulas, $x$ is assumed variable while $A$ and $b$ are
+constant $$\begin{aligned}
+  \delta [Ax-b] &= A \delta x \\
+  \delta [\|x\|^2] &= 2 x^T \delta x \\
+  \delta \left[\frac{1}{2} x^T A x - x^T b\right] &= (\delta x)^T (Ax-b) \\
+  \delta \left[\frac{1}{2} \|Ax-b\|^2 \right] &= (A \delta x)^T (Ax-b)
+\end{aligned}$$ and if $f : \bbR^n \rightarrow \bbR^n$ is given by
+$f_i(x) = \phi(x_i)$, then
+$$\delta [f(x)] = \operatorname{diag}(\phi'(x_1), \ldots, \phi'(x_n))
+  \, \delta x.$$

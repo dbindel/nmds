@@ -1,0 +1,6 @@
+# Stationary Iterations
+
+Standard splittings and such
+PageRank, Markov chains, etc
+Stochastic iterations? (look ahead)
+Regularization via iteration
