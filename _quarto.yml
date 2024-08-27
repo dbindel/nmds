@@ -1,5 +1,6 @@
 project:
   type: book
+  output-dir: docs
 
 # Focus on title subjects: numerical methods (continuous math,
 # primarily) for data science (drives the choice of examples and some
