@@ -106,7 +106,7 @@ We usually write scaling analyis using order notation (aka "big O" notation), wh
   $f(n) < C g(n)$.
 - $\Theta(g(n))$ if $f$ and $g$ grow at the same rate: there is an
   integer $N$ and positive constants $c$ and $C$ such that for all $n
-  \geq N$, $c g(n) \leq f(n) \geq C g(n)$.
+  \geq N$, $c g(n) \leq f(n) \leq C g(n)$.
 
 Even though order notation defines sets of functions, we usually abuse
 notation and write things like $f(n) = O(g(n))$ rather than the more

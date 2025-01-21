@@ -934,8 +934,6 @@ $$
 When $\|g'(x)\| \leq C$ for all $x \in \Omega$, the function $g$ is
 Lipschitz with constant $C$ on $\Omega$.
 
-
-
 ### Chain rule
 
 Suppose $f : \calV \rightarrow \calW$ and $g : \calU \rightarrow
@@ -1736,12 +1734,31 @@ $$
 $$
 converges in a neighborhood of $z_0$ (in $\bbR$ or $\bbC$), we say the
 function $f$ is *analytic* at $z_0$.  Such a function is automatically
-infinitely differentiable in a neighborhood of $z_0$.  Functions that
-are real analytic in the neighborhood of a point are also complex
-analytic in a neighborhood.  Complex analyticity around a point
-(existence of a convergent Taylor series) and the property of being
-holomorphic around a point (having complex derivatives that satisfy
-the Cauchy-Riemann equations) are equivalent to each other.
+infinitely differentiable in a neighborhood of $z_0$.  However, there
+are (useful) examples of non-analytic functions on $\bbR$ that are
+infinitely differentiable, e.g.
+$$
+  g(x) = 
+  \begin{cases} 
+    \exp(-1/x), & x \geq 0 \\
+    0 & \mbox{otherwise} 
+  \end{cases}
+$$
+
+Complex analyticity around a point $z_0 \in \bbC$ (existence of a
+convergent Taylor series) and the property of being *holomorphic*
+around a point (having complex derivatives that satisfy the
+Cauchy-Riemann equations) are equivalent to each other.  Functions
+that are real analytic in the neighborhood of a point in $\bbR$ are
+also complex analytic in a neighborhood.  However, a function that is
+real analytic over all of $\bbR$ may not extend to a function that is
+complex analytic over all of $\bbC$.
+
+The property of analyticity at a point $z_0$ is closed under addition,
+scaling, multiplication of functions, integration, differentiation,
+and composition.  It is also closed under division, assuming that the
+denominator function is nonzero at $z_0$.
+
 
 ### Operator functions
 ### Neumann series
