@@ -275,7 +275,6 @@ Suppose $X$ is a (non-empty) complete metric space and $f : X
 unique point $x_* \in X$ such that $f(x_*) = x_*$.
 
 :::
-w
 ::: {.proof}
 Choose any $x_0 \in X$; there must be at least one since $X$ is
 non-empty.  Using $x_0$ as a starting point, define the sequence $x_0,
@@ -418,10 +417,10 @@ class will be absolutely continuous.
 ### Bounded variation
 
 The *total variation* of a function $f : [a,b] \rightarrow \bbR$ is
-a supremum over partitions $a = x_0 < x_1 < \ldots < x_{n_\calP} = b$
+a supremum over partitions $a = x_0 < x_1 < \ldots < x_{n_{\calP}} = b$
 of how much the function value jumps:
 $$
-  V_a^b = \sup_{\mathcal{P}} \sum_{i=0}^{n_\calP-1} |f(x_{i+1})-f(x_i)|.
+  V_a^b = \sup_{\mathcal{P}} \sum_{i=0}^{n_{\calP}-1} |f(x_{i+1})-f(x_i)|.
 $$
 For continuously differentiable functions, the total variation is the
 integral of the absolute value of the derivative.  The notion
@@ -444,7 +443,7 @@ $$
   \|f(x)-f(y)\| \leq C\|x-y\|.
 $$
 Unlike other notions of continuity we have considered, Lipschitz
-continuity involves no {\em explicit} $\epsilon-\delta$ relationship.
+continuity involves no *explicit* $\epsilon-\delta$ relationship.
 Also unlike other notions of continuity, Lipschitz continuity gives us
 control on the relationship between function values even at points
 that may be far from each other.
@@ -1609,6 +1608,7 @@ $$\begin{aligned}
   (r')^{n-N} \|v_N\| \\
   &= \left\| \sum_{n=1}^{N-1} v_n \right\| + \frac{\|v_N\|}{1-r'}.
 \end{aligned}$$
+
 :::
 
 ### Function series

@@ -407,7 +407,7 @@ end
 
 In any local scope, we can explicitly declare that we want to use a
 global variable.  For example:
-```{julia} 
+```{julia}
 function modify_global_xyz()
     xyz = 0
     let
@@ -555,7 +555,7 @@ following expressions evaluate to `true`:
 1 == 1   &&
 1 != 2   &&
 2 == 2.0 &&
-[1; 2] == [1.0; 2.0] 
+[1; 2] == [1.0; 2.0]
 ```
 
 The substitutional equality operation (`===`) and inequality operation
@@ -670,12 +670,18 @@ bunpack = (a..., 2) # Yields (1.0, 1.00000001, 2)
 
 Function calls and operations can be applied elementwise to arrays
 using broadcasting syntax.  This involves putting a dot before the
-operator name or after the function name.  For example: ```{.julia} θs
-= [0; π/4; π/2; 3π/4; π] cos.(θs) # [1; sqrt(2)/2; 0; -sqrt(2)/2; -1]
-θs .+ 1 # [1; π/4+1; π/2+1; 3π/4+1; π+1] ``` The `@.` macro can be
-used to "dot-ify" everything in an expression, e.g.  ```{.julia} xs =
-range(0, 1, length=100) y = @. xs^2 + 2xs + 1.0 ``` evaluates the map
-$x \mapsto x^2 + 2x + 1$ to every element of the vector `xs`.
+operator name or after the function name.  For example:
+```{.julia}
+θs = [0; π/4; π/2; 3π/4; π] cos.(θs) # [1; sqrt(2)/2; 0; -sqrt(2)/2; -1]
+θs .+ 1                              # [1; π/4+1; π/2+1; 3π/4+1; π+1]
+```
+The `@.` macro can be
+used to "dot-ify" everything in an expression, e.g.
+```{.julia}
+xs =range(0, 1, length=100) y = @. xs^2 + 2xs + 1.0
+```
+evaluates the map $x \mapsto x^2 + 2x + 1$ to every element of the
+vector `xs`.
 
 Vectorized operations are critical to performance in some languages.
 In Julia, they are not so performance critical.  However, they are
@@ -789,7 +795,7 @@ statement is actually an expression, which evaluates to whatever
 branch is taking.  For example
 ```{julia}
 #|output: false
-is_leap_year(year) = 
+is_leap_year(year) =
     if year % 400 == 0
         true # Multiples of 400 years are leap years
     elseif year % 100 == 0
@@ -847,7 +853,9 @@ function mydot2(x, y)
 end
 ```
 In the `for` loop syntax, we can use `=`, `in`, or `∈` between the
-loop variable name and the collection to be iterated over.
+loop variable name and the collection to be iterated over.  We can
+define new things that a `for` loop can iterate on by overloading
+the `Base.iterate` function.
 
 The `break` statement jumps out of a loop in progress.
 
@@ -914,7 +922,7 @@ similar to what we saw with the equational syntax.
 ### Defaults and keywords
 
 Most Julia functions take arguments.
-We can define arguments later in the list to have default values; for example: 
+We can define arguments later in the list to have default values; for example:
 ```{.julia}
 increment(x, amount=1) = x + amount
 ```
@@ -954,10 +962,10 @@ equation $f(x) = 0$:
 #|output: false
 """    naive_newton(f, df, x; maxiter=10, ftol=1e-8)
 
-Run Newton iteration to find a zero of `f` 
-(with derivative `df`) from the starting 
+Run Newton iteration to find a zero of `f`
+(with derivative `df`) from the starting
 point `x`.  Returns when the magnitude of `f`
-is less than `ftol`, otherwise errors out 
+is less than `ftol`, otherwise errors out
 after running for `maxiter` steps.
 """
 function naive_newton(f, df, x; maxiter=10, ftol=1e-8)
@@ -983,7 +991,7 @@ routine, or we could record each call to the function.
 #|output: false
 function plot_naive_newton(f, df, x; maxiter=10, ftol=1e-8)
 
-    # Create a list of values and a closure that 
+    # Create a list of values and a closure that
     # records function evaluations to the list
     fs = []
     function frecord(x)
@@ -991,10 +999,10 @@ function plot_naive_newton(f, df, x; maxiter=10, ftol=1e-8)
         push!(fs, fx)
         fx
     end
-  
-    x = naive_newton(frecord, df, x, 
+
+    x = naive_newton(frecord, df, x,
                      maxiter=maxiter, ftol=ftol)
-	plot(filter(fx->fx > 0, abs.(fs)),
+    plot(filter(fx->fx > 0, abs.(fs)),
          xlabel="k",
          yscale=:log10, label="\$f(x_k)\$")
 end
@@ -1063,7 +1071,7 @@ operators acting on new types.  For example, consider a new type
 (we will return to this in @sec-julia-types):
 ```{julia}
 struct Polynomial
-	coeffs :: Vector{Float64}
+    coeffs :: Vector{Float64}
 end
 ```
 
@@ -1072,20 +1080,20 @@ For example, to add implementation of the `+` and `*`
 operators from `Base` that works with a `Polynomial`, we would write
 ```{julia}
 function Base.:+(p :: Polynomial, q :: Polynomial)
-	  n = max(length(p.coeffs), length(q.coeffs))
-	  c = zeros(n)
-	  c[1:length(p.coeffs)] = p.coeffs
-	  c[1:length(q.coeffs)] += q.coeffs
-	  Polynomial(c)
+      n = max(length(p.coeffs), length(q.coeffs))
+      c = zeros(n)
+      c[1:length(p.coeffs)] = p.coeffs
+      c[1:length(q.coeffs)] += q.coeffs
+      Polynomial(c)
 end
 
 function Base.:*(p :: Polynomial, q :: Polynomial)
-	  n = length(p.coeffs) + length(q.coeffs) - 1
-	  c = zeros(n)
-	  for (i, pi) in enumerate(p.coeffs)
-		    c[i:length(q.coeffs)+i-1] += pi*q.coeffs
-	  end
-	  Polynomial(c)
+      n = length(p.coeffs) + length(q.coeffs) - 1
+      c = zeros(n)
+      for (i, pi) in enumerate(p.coeffs)
+            c[i:length(q.coeffs)+i-1] += pi*q.coeffs
+      end
+      Polynomial(c)
 end
 ```
 
@@ -1333,6 +1341,12 @@ types, whether primitive types (like `Logical`, `UInt16`, or
 `Float64`), or various compound types, are always leaves of the
 hierarchy.
 
+It is possible (and sometimes useful) to declare new abstract
+types, e.g.
+```{.julia}
+abstract type MyAwesomeAbstraction end
+```
+
 ### Numeric types
 
 The *primitive* concrete numeric types in Julia are
@@ -1471,8 +1485,8 @@ new *inner constructor* function:
 struct MyRational{T<:Integer} <: Number
     p :: T
     q :: T
-    MyRational(p :: Integer, q :: Integer) = 
-       	if q == zero(q)
+    MyRational(p :: Integer, q :: Integer) =
+        if q == zero(q)
             error("Divide by zero")
         else
             p, q = promote(p, q)
@@ -1508,7 +1522,7 @@ As described earlier, we might also decide that we wanted to overload
 the operators.  Note that this does not require any special magic with
 the type parameters to `MyRational`:
 ```{.julia}
-Base.:+(a :: MyRational, b :: MyRational) = 
+Base.:+(a :: MyRational, b :: MyRational) =
     MyRational(a.p*b.q + a.q*b.p, a.q*b.q)
 Base.:-(a :: MyRational, b :: MyRational) =
     MyRational(a.p*b.q - a.q*b.p, a.q*b.q)
@@ -1522,7 +1536,7 @@ What if we want to get the type associated with `p` and `q`?  We can,
 of course, use `typeof(p)` to do this, but we can also write a method
 to extract the type.  Unlike the overloaded operators, this method
 *does* explicitly refer to the type parameter, and so we need some
-additional syntax: 
+additional syntax:
 ```{.julia}
 inttype(:: MyRational{T}) where {T} = T
 ```
@@ -1534,6 +1548,140 @@ Unpacking this construction, we have
 
 - The `where {T}` clause to specify that this method definition is
   parameterized by the type `T`.
+
+### Structs and inheritance
+
+Inheritance from abstract types can be a used to provide shared
+functionality in two ways:
+
+- We can keep some information in abstract type parameters.
+- We can write generic methods for an abstract type that use specific
+  implementations for concrete types (Julia's version of "duck typing"
+  from languages like Python).
+
+As a somewhat silly example, let's consider an abstraction around a
+list of points in $d$-dimensional space, where each point is
+considered to be a length-$d$ tuple.
+
+```{julia}
+#| output: false
+abstract type Points{d,T} end
+dim(p :: Points{d,T}) where {d,T} = d
+Base.eltype(p :: Points{d,T}) where {d,T} = T
+```
+
+The dimension `d` and the element type `T` are type parameters for the
+abstract type, and nothing special needs to be done for types
+inheriting from `Points{d,T}` to use the `dim` or `eltype` functions.
+
+The abstraction of "list of points" can be implemented with multiple
+data structures and associated versions of the `Base` functions
+`length` and `getindex`.  For example, we could use parallel arrays
+for the coordinates:
+
+```{julia}
+#| output: false
+struct ParallelPoints2d{T} <: Points{2,T}
+    x :: Vector{T}
+    y :: Vector{T}
+end
+Base.length(ps :: ParallelPoints2d) = length(ps.x)
+Base.getindex(ps :: ParallelPoints2d, i) = (ps.x[i], ps.y[i])
+```
+
+Or we could keep the points in a matrix, where each column represents
+a different point:
+
+```{julia}
+#| output: false
+struct MatrixPoints{d,T} <: Points{d,T}
+    xy :: Matrix{T}
+end
+Base.length(ps :: MatrixPoints) = size(ps.xy,2)
+Base.getindex(ps :: MatrixPoints, i) = Tuple(view(ps.xy,:,i))
+```
+
+For the case of `MatrixPoints`, it is redundant to explicitly specify
+the dimension of the space when we provide a matrix of points to
+initialize the object.  Julia can infer from the type of the matrix
+what `T` should be; but to get `d`, it needs some help.
+
+```{julia}
+#| output: false
+MatrixPoints(xy :: AbstractMatrix) =
+    MatrixPoints{size(xy,1),eltype(xy)}(xy)
+```
+
+Just using the `length` and `index` (and the `dim` function from
+above), we can write generic implementations of operations like
+converting a list of points to a matrix, whatever the underlying data structure.
+
+```{julia}
+function to_matrix(ps :: Points)
+    result = zeros(eltype(ps), dim(ps), length(ps))
+    for j = 1:length(ps)
+        result[:,j] .= ps[j]
+    end
+    result
+end
+
+to_matrix(ParallelPoints2d([1, 2, 3], [4, 5, 6]))
+```
+
+Or we might like to be able to iterate over a list of points; for this,
+we again only need to know that `length` and `getindex` are implemented
+to be able to provide a generic iterator.
+
+```{julia}
+#| output: false
+Base.iterate(ps :: Points, i=1) =
+    i > length(ps) ? nothing : (ps[i], i+1)
+```
+
+There are some times when we might want slightly more specialized
+behavior based on the type.  For example, for output, we might want to
+list 1D points as just individual numbers rather than as tuples
+(i.e. output `1` rather than `(1,)`).  To do this, we can write a
+generic version of the `show` routine (used for output), but also one
+that specializes to the one-dimensional case.  Julia will choose the
+more specific version for a given type.
+
+```{julia}
+# Generic version of show
+function Base.show(io :: IO, ps :: Points)
+    print(io, "[ ")
+    for p in ps
+        print(io, p)
+        print(io, " ")
+    end
+    print(io, "]")
+end
+
+# Version of show for 1D points
+function Base.show(io :: IO, ps :: Points{1,T}) where {T}
+    print(io, "[ ")
+    for p in ps
+        print(io, p[1])
+        print(io, " ")
+    end
+    print(io, "]")
+end
+
+# Illustrate printing in 1D or 2D with different structs
+let
+    println(ParallelPoints2d([1, 2, 3], [4, 5, 6]))
+    println(MatrixPoints([1 2 3; 4 5 6]))
+    println(MatrixPoints([1 2 3 4 5 6]))
+end
+```
+
+Between type parameters and dispatch to different methods for concrete
+types, the Julia language provides most of the amenities that would be
+implemented via inheritance in other languages.  Perhaps the biggest
+exception to this is that Julia provides no direct support for
+identifying data fields that should be implemented for all structs
+inheriting from some abstract type -- though one can write macros that
+provide such support.
 
 ### Mutable structs
 
@@ -1654,7 +1802,7 @@ Base.convert(::Type{MyRational}, p :: Integer) = MyRational(p)
 A more elaborate example might involve converting `MyRational` values
 with different integer parameter types:
 ```{.julia}
-Base.convert(::Type{MyRational{T}}, r :: MyRational) where {T} = 
+Base.convert(::Type{MyRational{T}}, r :: MyRational) where {T} =
     MyRational(T(r.p), T(r.q))
 ```
 The `promote` function in Julia takes a list of values and converts
@@ -1677,9 +1825,9 @@ subtype of `Exception`, which we `throw` when the error is detected:
 Compute the imaginary part of the principal branch
 of the log of negative number x.
 """
-imlog(x) = 
-    (x >= zero(x)) ? 
-    throw(DomainError("Argument must be negative")) : 
+imlog(x) =
+    (x >= zero(x)) ?
+    throw(DomainError("Argument must be negative")) :
     log(-x)
 ```
 The `error` function throws an instance of an `ErrorException`.
@@ -1800,7 +1948,7 @@ layout in computer memory in different ways.
 # Note: Julia is column-major
 avec = reshape(A, prod(size(A)));
 A = reshape(avec, n, n)
-  
+
 idx = randperm(n)   # Random permutation of indices (need to use Random)
 Ac = A[:,idx]       # Permute columns of A
 Ar = A[idx,:]       # Permute rows of A
@@ -1848,7 +1996,7 @@ y = d.*x   # Elementwise multiplication of vectors/matrices
 y = x./d   # Elementwise division
 z = x + y  # Add vectors/matrices
 z = x .+ 1 # Add scalar to every element of a vector/matrix
-  
+
 y = A*x    # Matrix times vector
 y = x'*A   # Vector times matrix
 C = A*B    # Matrix times matrix
@@ -1927,7 +2075,8 @@ image, sound, and video formats.
 The `Test` package in Julia provides a variety of useful tools for
 writing unit tests.  When tests fail and it is necessary to step
 through code, the `Debugger` package is useful.  For performance
-evaluation, we recommend the `BenchmarkTools` and `Profile` packages.
+evaluation, we recommend the `BenchmarkTools` and `Profile` packages,
+as well as `DispatchDoctor` for checking type stability.
 
 ## Macros and metaprogramming
 
@@ -2067,13 +2216,25 @@ suffer[^nb-sometimes-ends] from a performance issue because the
 compiler analysis does not determine that variables from the outer
 context (captured variables) are "type stable" (see
 @sec-performance-ch).  Putting the function into a `let` block can
-help address the issue, e.g. replacing ```{.julia} f = x -> C*x ```
-with ```{.julia} f = let C=C x -> C*x end ``` This does make a
-semantic change to the program; for example, the code ```{.julia} C =
-10 f = x -> C*X C = 20 f(5) ``` will produce 100, while introducing an
-enclosing `let` block would produce 50.  Nonetheless, in many cases
-captured variables remain unchanging for the useful lifetime of a
-closure, and this is a valid transformation.
+help address the issue, e.g. replacing
+```{.julia}
+f = x -> C*x
+```
+with
+```{.julia}
+f = let C=C x -> C*x end
+```
+This does make a semantic change to the program; for example, the code
+```{.julia}
+C = 10
+f = x -> C*X
+C = 20
+f(5)
+```
+will produce 100, while introducing an enclosing `let` block would
+produce 50.  Nonetheless, in many cases captured variables remain
+unchanging for the useful lifetime of a closure, and this is a valid
+transformation.
 
 Let us assume we are interested in automatically producing a
 surrounding `let` block.  In this case, we first need a list of
@@ -2103,7 +2264,7 @@ Now we are in a position to define the macro:
 ```{julia}
 #|output: false
 macro letclosure(e)
-    
+
     # Check that this is a function definition with ->
     @assert e.head == :(->)
 
@@ -2128,7 +2289,6 @@ end
 ```
 There are a few points to note about our definition:
 
-
 - For local variables, the `macro` system produces "local" versions of
   names that do not coincide with any other names in the module.
   When we *want* such a coincidence, we need to explicitly escape a
@@ -2147,7 +2307,7 @@ let
     f(5)
 end
 ```
-If we want to see how a macro expannds out to regular code, we can use
+If we want to see how a macro expands out to regular code, we can use
 the `@macroexpand` macro.  Continuing with our example above, we have:
 ```{julia}
 @macroexpand @letclosure x -> C*x
@@ -2162,6 +2322,58 @@ names in the module.
 [^nb-sometimes-ends]: As the Julia documentation points out,
     improvements to the compiler may mean this will no longer be an
     issue soon.  This does not change the value of this as an example.
+
+### Macros for structs
+
+One simple use for macros is to define "boilerplate" code, such as
+data fields that must be defined for every struct inheriting from a
+particular abstract data type.  For example, we might assume that
+every instance of a `User` has a name and ID, but some types of users
+might have additional information.
+
+```{julia}
+#| output: false
+abstract type User end
+
+macro make_user_type(T, fields)
+    esc(quote
+            struct $T <: User
+                lastname  :: String
+                firstname :: String
+                id        :: String
+                $(fields.args...)
+            end
+        end)
+end
+```
+
+In this scenario, a `LocalUser` might requires only a name and ID (the
+first two fields for any `User`-derived type).
+
+```{julia}
+@make_user_type LocalUser begin end
+LocalUser("Brown", "Bob", "bbrown")
+```
+
+For an external user, though, we also want to keep track of an employer.
+```{julia}
+@make_user_type ExternalUser begin
+    employer :: String
+end
+ExternalUser("Smith", "Sam", "ssmith", "NSA")
+```
+
+Because there is a common set of fields, we can define utility
+functions that work on these fields for any class of user.
+```{julia}
+fullname(u :: User) = "$(u.firstname) $(u.lastname)"
+
+fullname(LocalUser("Brown", "Bob", "bbrown")),
+fullname(ExternalUser("Smith", "Sam", "ssmith", "NSA"))
+```
+
+Of course, it is possible to implement this type of functionality
+without macros as well --- it just might involve slightly more typing.
 
 ## A matching example
 
@@ -2185,7 +2397,7 @@ e ->
     if (e isa Expr && e.head == :call &&
         e.args[1] == :- && length(e.args) == 3 &&
         e.args[2] == 0)
-        
+
         # Bind the name "x" to the second argument
         let x = e.args[3]
             result = :(-$x)   # Create a "-x" expression
@@ -2199,7 +2411,7 @@ That is, we want a function that takes an input
 
 - Is this an expression with a binary `-` operation at the top?
 - Is the second term in the sum a zero?
-- If both are true, bind `x` to the second term in the sum, 
+- If both are true, bind `x` to the second term in the sum,
   produce a new expression `:(-$x)`, and assign to `result`.
   Return the pair `(true, result)`.
 - Otherwise, return `(false, nothing)`.
@@ -2324,7 +2536,7 @@ list of expressions matches a list of patterns.
 ```{julia}
 #| output: false
 match_gen_lists!(bindings, exprs, patterns) =
-    foldr((x,y) -> Expr(:(&&), x, y),
+    foldr((x,y) -> :($x && $y),
           [match_gen!(bindings, e, p)
            for (e,p) in zip(exprs, patterns)])
 ```
@@ -2430,7 +2642,7 @@ macro match(symbols, pattern)
 
     pattern = filter_line_numbers(pattern)
     matcher = compile_matcher(symbols.args, pattern)
-    :($matcher ∘ filter_line_numbers)
+    esc(:($matcher ∘ filter_line_numbers))
 end
 ```
 
@@ -2473,7 +2685,7 @@ function parse_rule(rule)
     begin ismatch, bindings = match_arg2(args); ismatch end ||
     begin bindings = (Vector{Any}([args]), nothing) end
     symbols, expr_name = bindings
-    
+
     if !all(isa.(symbols, Symbol))
         error("Arguments should all be symbols in $symbols")
     end
@@ -2499,6 +2711,7 @@ and `result` symbols are already set up.
 ```{julia}
 #| output: false
 function compile_rule(rule, expr, result)
+
     symbols, expr_name, pattern, code = parse_rule(rule)
     bindings = Dict{Symbol,Any}(s => nothing for s in symbols)
     test = match_gen!(bindings, expr, pattern)
@@ -2567,18 +2780,18 @@ macro rules(rblock :: Expr)
     rules = rblock.args
 
     # Or together all the tests
-    rule_calls = 
-        foldr((x,y) -> Expr(:(||), x, y),
+    rule_calls =
+        foldr((x,y) -> :($x || $y),
               [compile_rule(r, expr, result) for r in rules])
 
     # Call all the rules, return the computed result
     esc(quote
-        $expr ->
-            let $result = nothing
-                $rule_calls
-                $result
-            end
-    end)
+            $expr ->
+                let $result = nothing
+                    $rule_calls
+                    $result
+                end
+        end)
 end
 ```
 
@@ -2601,7 +2814,7 @@ function reassoc_addmul(e)
 
     # Apply folding to an op(args...) node (op = +, *)
     fold_args(args, op) =
-        foldl((x,y) -> Expr(:call, op, x, y), args)
+        foldl((x,y) -> :($op($x, $y)), args)
 
     # Rules for processing one expression node
     r = @rules begin
