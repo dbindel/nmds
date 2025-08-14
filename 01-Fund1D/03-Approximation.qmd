@@ -1,0 +1,17 @@
+# Approximation {#sec-approximation-ch}
+
+- Inputs: function values, sampling oracle (values, derivs, integrals, etc)
+- Output: Approximating function, often used for other tasks.  Plus some notion of error!
+- Q to ask: what data is available?  Noise?  What is assumed about fn (smoothness, derivatives, etc)?
+- What is needed from approximator (derivatives?).  How fast is fitting?  Evaluation?  Convergence?
+- Discuss general theory and influence of noise later.  Focus here on piecewise polynomials and interpolation thereof.
+
+- Polynomial interpolation and regression
+- Different forms of the interpolation problem
+- Choice of basis and numerical issues, computational speed
+- Error analysis
+- Piecewise polynomials: splines and more
+- Kernel-based approximation
+- Which space to use?
+- Rational approximation
+- Approximation of densities

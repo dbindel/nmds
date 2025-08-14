@@ -1,0 +1,12 @@
+# Root Finding and Optimization
+
+Global and local search
+Hard and easy problems, initial guesses, bounding intervals
+Bisection
+Fixed point iteration and analysis
+Newton's method and analysis
+Beyond Newton's method -- polynomial proxies, etc (fwd pointer)
+Secant method
+Safeguards
+Comments re multiple parameters, implicit differentiation (look ahead)
+Connections: parameter estimation

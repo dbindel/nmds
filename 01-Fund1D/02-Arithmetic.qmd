@@ -1,0 +1,10 @@
+# Floating Point {#sec-floating-point-ch}
+
+- Fundamentals of floating point (and fixed point!)
+- Floating point formats
+- Basic arithmetic operations, rules for IEEE
+- Exceptional conditions
+- Error analysis
+- Design principles
+- Multiple precision computations
+- Simulated extra precision

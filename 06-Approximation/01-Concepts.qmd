@@ -1,0 +1,5 @@
+# Fundamental Concepts
+
+Space of functions / parameterization (NB: "nonparametric")
+Consistency, stability, bias/variance decomposition, curse of dimensionality
+Interpolation or other fitting process, stability in map from data to fns (noise and numerics)

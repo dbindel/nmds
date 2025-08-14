@@ -1,0 +1,8 @@
+# Computing with Randomness
+
+NB: Maybe this is just section 4
+
+Randomized methods - Monte Carlo and Las Vegas
+Variational inference (??)
+Probabilistic numerics (including BQ)
+Uncertainty quantification

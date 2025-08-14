@@ -1,0 +1,12 @@
+# Least Squares {#sec-least-sq-ch}
+
+Underdetermined and overdetermined systems
+Standard approaches (QR, NE, SVD)
+Augmented system formulation
+Alternate norms, continuous least squares and associated factorizations
+Regularization (Tikhonov, truncated SVD, implicit regularization via iteration)
+Sketching
+Leverage scores
+Sparsity vs incoherence
+Bayesian least squares
+Cross-validation, GCV, etc
