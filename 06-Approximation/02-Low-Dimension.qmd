@@ -1,4 +1,0 @@
-# Low-Dimensional Structure
-
-On input: active subspace, sloppy models, random embed for optimization
-On output: POD, DEIM, etc; approximation from a subspace

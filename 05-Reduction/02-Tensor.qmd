@@ -1,7 +1,0 @@
-# From Matrices to Tensors
-
-Basic vocabulary
-Why are tensors harder
-CP
-Tucker
-Tensor train

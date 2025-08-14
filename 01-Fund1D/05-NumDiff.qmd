@@ -1,7 +1,0 @@
-# Numerical Differentiation {#sec-numdiff-ch}
-
-- Finite differencing (real and complex)
-- Differentiation via models
-- Differentiation matrices
-
-

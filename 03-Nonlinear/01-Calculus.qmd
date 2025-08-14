@@ -1,5 +1,0 @@
-# Calculus Revisited
-
-Finite differences and sparsity
-Use and abuse of automatic differentiation
-Backpropagation and neural networks (SIREV, Neidinger 2010)

@@ -1,8 +1,0 @@
-# Constrained Optimization
-
-Equality vs inequality constraints
-Simple non-negativity constraints
-Penalties and barriers
-Projected gradients and SPG
-Interior point methods
-Augmented Lagrangian methods 
