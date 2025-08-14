@@ -1759,9 +1759,80 @@ scaling, multiplication of functions, integration, differentiation,
 and composition.  It is also closed under division, assuming that the
 denominator function is nonzero at $z_0$.
 
-
 ### Operator functions
+
+Just as we can compute powers of $z \in \bbC$, we can compute powers
+of $A \in L(\calV, \calV)$.  Indeed, as we noted in @sec-tbd,
+polynomials of an operator are enormously useful both as a theoretical
+tool (e.g. for studying eigenvalues) and as a numerical tool (e.g. in
+the design of Krylov subspace methods, which we will see later in this
+book).  Unsurprisingly, taking limits of sequences of polynomials is
+also useful, and power series expressions for analytic functions 
+on $\bbC$ work equally well for describing analytic functions  on
+operator spaces.
+
+For our purposes, we will mostly consider $\calV$ to be a
+finite-dimensional normed space, but the concept works equally well
+for general Banach spaces.  In either case, the space of bounded
+operators $L(\calV, \calV)$ is itself a Banach space, and our earlier
+comments about convergent series in general Banach spaces holds.
+For example, using a consistent family of norms (e.g. the operator
+norm), consider
+$$
+  \exp(A) = \sum_{k=0}^\infty \frac{1}{k!} A^k;
+$$
+by comparison to the series for $\exp(\|A\|)$, this series converges
+absolutely, and 
+$$
+  \|\exp(A)\| \leq \exp(\|A\|).
+$$
+We observe that if we have an eigenpair $Av = v \lambda$, then
+$$
+  \exp(A) v 
+  = \sum_{k=0}^\infty \frac{1}{k!} A^k v
+  = \sum_{k=0}^\infty \frac{1}{k!} v \lambda^k
+  = v \exp(\lambda).
+$$
+When $A$ is diagonalizable (i.e. $A = V \Lambda V^{-1}$), then we
+can completely characterize $\exp(A)$ as
+$$
+  \exp(A) = V \exp(\Lambda) V^{-1},
+$$
+where $\exp(\Lambda)$ is the diagonal matrix of exponentials of
+eigenvalues.
+
+What works for the exponential tends to work for more general analytic
+functions $f$.  Things get a little more complicated for operators
+with nontrivial Jordan blocks (and certainly for the more elaborate
+spectra that can occur in the infinite-dimensional case), but the
+fundamental picture remains the same: an analytic function $f$ makes
+sense as a function of an operator when the spectrum is inside the
+domain of analyticity; and $f(A)$ will have the same eigenvector
+structure as $A$ while eigenvalues are transformed by the mapping
+$\lambda \mapsto f(\lambda)$.
+
 ### Neumann series
+
+While the exponential provides a nice example of an operator power
+series, we will see far more of the *Neumann series*, which is the
+generalization of the geometric series.  When $\|A\| < 1$ under any
+consistent norm, we have that the Neumann series
+$$
+  (I-A)^{-1} = \sum_{k=0}^\infty A^k
+$$
+converges by comparison with a geometric series in $\|A\|$;
+and (courtesy that same comparison), that
+$$
+  \|(I-A)^{-1}\| \leq \sum_{k=0}^\infty \|A\|^k = \frac{1}{1-\|A\|}.
+$$
+With a little supplementary algebra, this Neumann series bound is
+the basis for many inequalities that will prove useful later.
+As an example left as an exercise for the student, we observe that
+when $A$ is invertible and $\|A^{-1} E\| < 1$, we have
+$$
+\|(A+E)^{-1}\| \leq \frac{\|A^{-1}\|}{1-\|A^{-1} E\|}.
+$$
+
 ## Integration
 ### Measure and integration
 ### Standard inequalities
